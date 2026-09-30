@@ -24,6 +24,11 @@ FONT_SEMIBOLD = os.path.join(HERE, "fonts", "Inter-SemiBold.ttf")
 REGISTRY = {}
 
 
+def px(v, s):
+    """v points at scale s, as whole pixels (scales may be fractional)."""
+    return max(1, int(round(v * s)))
+
+
 def image(name):
     def deco(fn):
         REGISTRY[name] = fn
@@ -334,14 +339,14 @@ for _n in ("track_folder_off", "track_folder_on", "track_folder_last", "mcp_fold
 def tcp_volbg(s):
     # Transparent: in the track panel the level meter is drawn as the fader track.
     cv = Canvas(22, 20, s)
-    return pink_border(cv.result(), 10 * s, 1 * s, 10 * s, 1 * s)
+    return pink_border(cv.result(), px(10, s), px(1, s), px(10, s), px(1, s))
 
 
 @image("envcp_faderbg")
 def envcp_faderbg(s):
     cv = Canvas(22, 20, s)
     cv.rrect(0, 8.5, 22, 3, 1.5, fill=c(P.WELL))
-    return pink_border(cv.result(), 10 * s, 1 * s, 10 * s, 1 * s)
+    return pink_border(cv.result(), px(10, s), px(1, s), px(10, s), px(1, s))
 
 
 @image("tcp_volthumb")
@@ -369,7 +374,7 @@ def tcp_panbg(s):
     cv = Canvas(56, 10, s)
     cv.rrect(0, 3.5, 56, 3, 1.5, fill=c(P.WELL))
     cv.rect(27.5, 2, 1, 6, fill=c(P.TEXT_3))
-    return pink_border(cv.result(), 6 * s, 1 * s, 6 * s, 1 * s)
+    return pink_border(cv.result(), px(6, s), px(1, s), px(6, s), px(1, s))
 
 
 image("tcp_widthbg")(tcp_panbg)
@@ -394,7 +399,7 @@ def mcp_volbg(s):
     # vertical fader track
     cv = Canvas(24, 20, s)
     cv.rrect(10.5, 0, 3, 20, 1.5, fill=c(P.WELL))
-    return pink_border(cv.result(), 1 * s, 9 * s, 1 * s, 9 * s)
+    return pink_border(cv.result(), px(1, s), px(9, s), px(1, s), px(9, s))
 
 
 @image("mcp_volthumb")
@@ -406,7 +411,7 @@ def mcp_volthumb(s):
     return cv.result()
 
 
-def knob_stack(s, size, bipolar, frames=64, ring=P.ACCENT, face_col=P.KNOB):
+def knob_stack(s, size, bipolar, frames=41, ring=P.ACCENT, face_col=P.KNOB):
     ims = []
     for i in range(frames):
         v = i / (frames - 1)
@@ -436,7 +441,7 @@ image("tcp_vol_knob_stack")(lambda s: knob_stack(s, 20, False, ring=P.TEXT_2))
 image("mcp_pan_knob_stack")(lambda s: knob_stack(s, 26, True, ring=P.TEXT_2))
 image("mcp_wid_knob_stack")(lambda s: knob_stack(s, 26, False, ring=P.TEXT_2))
 image("mcp_vol_knob_stack")(lambda s: knob_stack(s, 26, False, ring=P.TEXT_2))
-image("tcp_send_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.ACCENT))
+image("tcp_send_knob_stack")(lambda s: knob_stack(s, 16, True, ring=P.TEXT_2, face_col=P.CONTROL))
 image("mcp_send_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.ACCENT))
 image("mcp_fxparm_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.FX_ON))
 image("tcp_fxparm_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.FX_ON))
@@ -447,7 +452,7 @@ image("envcp_knob_stack")(lambda s: knob_stack(s, 20, False, ring=P.AUTO_READ))
 
 def solid(hexstr, w=6, h=6):
     def f(s):
-        return Image.new("RGBA", (w * s, h * s), c(hexstr))
+        return Image.new("RGBA", (px(w, s), px(h, s)), c(hexstr))
     return f
 
 
@@ -493,15 +498,14 @@ def meter_overlay(vertical, length=240, thick=12, pitch=3):
     """Drawn over the meter: thin dark gaps every `pitch` px turn the bar into
     LED segments."""
     def f(s):
-        n, t, p = length * s, thick * s, pitch * s
+        n, t = px(length, s), px(thick, s)
+        p, g = px(pitch, s), px(1, s)
         im = Image.new("RGBA", (t, n) if vertical else (n, t), (0, 0, 0, 0))
         gap = c(P.METER_GAP)
-        for i in range(p - s, n, p):
-            for j in range(t):
-                for k in range(s):
-                    xy = (j, i + k) if vertical else (i + k, j)
-                    if 0 <= xy[0] < im.width and 0 <= xy[1] < im.height:
-                        im.putpixel(xy, gap)
+        for start in range(p - g, n, p):
+            for i in range(start, min(start + g, n)):
+                for j in range(t):
+                    im.putpixel((j, i) if vertical else (i, j), gap)
         return im
     return f
 
@@ -516,11 +520,11 @@ def meter_clip(vertical, size=14):
     """Clip indicator: [unlit, lit] halves. Lit is a loud red block that
     latches until clicked."""
     def f(s):
-        n = size * s
-        im = Image.new("RGBA", (4 * s, 2 * n) if vertical else (2 * n, 4 * s))
+        n, t = px(size, s), px(4, s)
+        im = Image.new("RGBA", (t, 2 * n) if vertical else (2 * n, t))
         for i in range(2 * n):
             col_ = c(P.mix(P.METER_CLIP, P.METER_OFF, 0.82) if i < n else "#FF3B30")
-            for j in range(4 * s):
+            for j in range(t):
                 im.putpixel((j, i) if vertical else (i, j), col_)
         return im
     return f
@@ -541,7 +545,7 @@ def meter_badge(glyph, col):
 
 # Mute/solo state is already shown by the lit M/S buttons - no badge on the meter.
 for _n in ("meter_mute", "meter_foldermute", "meter_automute", "meter_unsolo", "meter_solodim"):
-    image(_n)(solid("#000000", 16, 16) if False else (lambda s: Image.new("RGBA", (16 * s, 16 * s), (0, 0, 0, 0))))
+    image(_n)(solid("#000000", 16, 16) if False else (lambda s: Image.new("RGBA", (px(16, s), px(16, s)), (0, 0, 0, 0))))
 
 
 # ---------------------------------------------------------- transport --------
@@ -628,7 +632,7 @@ image("transport_next")(transport_btn(g_next))
 
 @image("transport_bpm_bg")
 def transport_bpm_bg(s):
-    return Image.new("RGBA", (4 * s, 4 * s), (0, 0, 0, 0))
+    return Image.new("RGBA", (px(4, s), px(4, s)), (0, 0, 0, 0))
 
 
 image("transport_group_bg")(transport_bpm_bg)
@@ -643,7 +647,7 @@ def transport_tap(s):
 def trans_section_bg(s):
     cv = Canvas(16, 16, s)
     cv.rrect(0, 0, 16, 16, 6, fill=c(P.WELL))
-    return pink_border(cv.result(), 7 * s, 7 * s, 7 * s, 7 * s)
+    return pink_border(cv.result(), px(7, s), px(7, s), px(7, s), px(7, s))
 
 
 # ------------------------------------------------------------- envcp ---------
@@ -692,7 +696,7 @@ def tcp_recinput(s):
     cv = Canvas(26, 20, s)
     cv.rrect(0, 2, 26, 16, 4, fill=c(P.WELL))
     chevron(cv, 20, 10, "down", c(P.TEXT_3), 2.2, 1.2)
-    return pink_border(cv.result(), 6 * s, 5 * s, 10 * s, 5 * s)
+    return pink_border(cv.result(), px(6, s), px(5, s), px(10, s), px(5, s))
 
 
 image("mcp_recinput")(tcp_recinput)
@@ -700,7 +704,7 @@ image("mcp_recinput")(tcp_recinput)
 
 @image("tcp_namebg")
 def tcp_namebg(s):
-    return Image.new("RGBA", (6 * s, 6 * s), (0, 0, 0, 0))
+    return Image.new("RGBA", (px(6, s), px(6, s)), (0, 0, 0, 0))
 
 
 image("mcp_namebg")(tcp_namebg)
@@ -715,7 +719,7 @@ def list_slot(fill_col, w=20, h=20):
             cv = Canvas(w, h, s)
             cv.rrect(0, 1, w, h - 2, 3.5, fill=c(face(st, fill_col)))
             ims.append(cv.result())
-        return pink_border(vstack(ims), 5 * s, 5 * s, 5 * s, 5 * s)
+        return pink_border(vstack(ims), px(5, s), px(5, s), px(5, s), px(5, s))
     return f
 
 
@@ -730,14 +734,32 @@ image("tcp_fxlist_empty")(list_slot(P.SLOT_EMPTY))
 image("mcp_sendlist_norm")(list_slot(P.mix(P.ACCENT, P.PANEL, 0.82)))
 image("mcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
 image("mcp_sendlist_empty")(list_slot(P.SLOT_EMPTY))
-image("tcp_sendlist_norm")(list_slot(P.mix(P.ACCENT, P.PANEL, 0.82)))
-image("tcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
-image("tcp_sendlist_empty")(list_slot(P.PANEL))  # invisible on the panel, still clickable
+def send_slot(field, w=56, h=20, knob_w=22):
+    """Track-panel send slot. Frame 0 is the field; REAPER paints the send
+    level over it, tinted with the destination track's color. Frames 1-2
+    are hover / pressed.
+    The right `knob_w` points hold the send knob and never stretch."""
+    def f(s):
+        ims = []
+        for st in STATES:
+            cv = Canvas(w, h, s)
+            base = face(st, field)
+            # flat and nearly square: REAPER paints the level (in the destination
+            # track's color) as a square-cornered fill over this field
+            cv.rrect(0, 2, w, h - 4, 2, fill=c(base))
+            ims.append(cv.result())
+        return pink_border(vstack(ims), px(6, s), px(4, s), px(knob_w, s), px(4, s))
+    return f
+
+
+image("tcp_sendlist_norm")(send_slot(P.SEND_FIELD))
+image("tcp_sendlist_mute")(send_slot(P.mix(P.SEND_FIELD, P.PANEL, 0.6)))
+image("tcp_sendlist_empty")(lambda s: pink_border(Image.new("RGBA", (px(56, s), px(60, s)), (0, 0, 0, 0)), px(6, s), px(4, s), px(22, s), px(4, s)))
 
 
 @image("mcp_fxlist_bg")
 def mcp_fxlist_bg(s):
-    return Image.new("RGBA", (4 * s, 4 * s), c(P.PANEL))
+    return Image.new("RGBA", (px(4, s), px(4, s)), c(P.PANEL))
 
 
 image("mcp_sendlist_bg")(mcp_fxlist_bg)

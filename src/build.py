@@ -5,7 +5,7 @@
 
 Outputs:
   build/BeautifulReaper/            unpacked theme (images, rtconfig.txt)
-  build/BeautifulReaper/200/        2x images for HiDPI / Retina
+  build/BeautifulReaper/<pct>/      images for each UI scale step (125..300%)
   build/BeautifulReaper.ReaperTheme color + font file
   dist/BeautifulReaper.ReaperThemeZip
 """
@@ -44,9 +44,36 @@ TOKENS = {
 }
 
 
+# UI scale steps (percent). REAPER picks the nearest step for the current UI
+# scale; every step gets its own layout, image folder and pair of fonts.
+SCALES = [100, 125, 150, 175, 200, 250, 300]
+
+
+def layout_blocks(macro):
+    out = ["%s 1 0" % macro]
+    for k, pct in enumerate(SCALES):
+        name = "A" if pct == 100 else "%d%%_A" % pct
+        folder = "" if pct == 100 else ' "%d"' % pct
+        out.append('Layout "%s"%s\n\t%s %g %d\nendLayout' % (name, folder, macro, pct / 100, 2 * k))
+    return "\n".join(out)
+
+
+def dpi_rules():
+    lines = ["; Scale steps: from each threshold (midway between steps) up, use that step.",
+             "; '' covers tracks with no layout chosen, which is almost all of them."]
+    for lo, pct in zip(SCALES, SCALES[1:]):
+        thr = (lo + pct) / 200
+        lines.append("misc_dpi_translate %d %d" % (round(thr * 100), pct))
+        for src in ("''", "'A'"):
+            lines.append("layout_dpi_translate %s %.3f '%d%%_A'" % (src, thr, pct))
+    return "\n".join(lines)
+
+
 def render_rtconfig():
     with open(os.path.join(HERE, "rtconfig.txt")) as f:
         src = f.read()
+    src = re.sub(r"\$LAYOUTS (\w+)\$", lambda m: layout_blocks(m.group(1)), src)
+    src = src.replace("$DPI_RULES$", dpi_rules())
 
     def sub(m):
         key = m.group(1)
@@ -59,12 +86,12 @@ def render_rtconfig():
 def main():
     theme_dir = os.path.join(BUILD, NAME)
     shutil.rmtree(BUILD, ignore_errors=True)
-    n = images.generate(theme_dir, 1)
-    images.generate(os.path.join(theme_dir, "200"), 2)
+    for pct in SCALES:
+        n = images.generate(theme_dir if pct == 100 else os.path.join(theme_dir, str(pct)), pct / 100)
     with open(os.path.join(theme_dir, "rtconfig.txt"), "w", newline="\r\n") as f:
         f.write(render_rtconfig())
     theme_file = os.path.join(BUILD, NAME + ".ReaperTheme")
-    colors.write_theme_file(theme_file, NAME)
+    colors.write_theme_file(theme_file, NAME, SCALES)
 
     os.makedirs(DIST, exist_ok=True)
     zpath = os.path.join(DIST, NAME + ".ReaperThemeZip")
@@ -74,7 +101,7 @@ def main():
             for fn in sorted(files):
                 full = os.path.join(base, fn)
                 z.write(full, os.path.relpath(full, BUILD))
-    print("built %s (%d images x 2 scales)" % (os.path.relpath(zpath, ROOT), n))
+    print("built %s (%d images x %d scales)" % (os.path.relpath(zpath, ROOT), n, len(SCALES)))
 
 
 if __name__ == "__main__":

@@ -24,7 +24,6 @@ tcp_heights 1 24 32 56
 tcp_master_minheight 40
 envcp_min_height 24
 mcp_min_height 300 80
-misc_dpi_translate 174 200
 
 tcp_vol_zeroline 00000000
 tcp_pan_zeroline 00000000
@@ -98,23 +97,23 @@ macro drawTcp S F
 	; level block on row 1: fader right edge fixed at w-226, left edge at w-346
 	; unless the name needs room (then it shrinks)
 	; row 1 reads left to right: name | sends | -2.1 dB | meter+fader | pan
-	set sendX1 - volX1{0} * S 204
+	set sendX1 - volX1{0} * S 226
 	; level block on its own row: sends, then a wide fader, dB and pan at the right
-	set sendW * S 150
+	set sendW * S 172
 	set hasSends !send_cnt 0 1
 	set volX2 - w * S 156
 
 	set volX levelRow{0}==2 volX2{0} volX1{0}
 	set volW * S 120
 	set showVol levelRow{0}==0 0 1
-	set sendX levelRow{0}==2 - volX{0} * S 204 sendX1{0}
+	set sendX levelRow{0}==2 - volX{0} * S 226 sendX1{0}
 	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 sendX{0}<nameX{0} 0 1 sendX{0}<minNameR{0} 0 1
 
 	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} - volX{0} * S 46 - w * S 182 - w * S 182
 	set nameW - - nameR{0} nameX{0} * S 8
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
-	set tcp.label.font + [4] [F]
+	set tcp.label.font + [2] [F]
 	set tcp.label.color ?track_selected [255 255 255] [$TEXT$]
 
 	; level: the meter is the fader's track
@@ -131,7 +130,7 @@ macro drawTcp S F
 	set dbX - volX{0} * S 46
 	set tcp.volume.label !showVol{0} [0] + [dbX{0} levelY{0}] * Sv [0 0 42 20]
 	set tcp.volume.label.margin [0 0 0 0 1]
-	set tcp.volume.label.font + [2] [F]
+	set tcp.volume.label.font + [1] [F]
 	set tcp.volume.label.color [$TEXT_2$]
 	set panX levelRow{0}==2 * S -28 * S -176
 	set panY levelRow{0}==2 levelY{0} row1Y{0}
@@ -140,7 +139,7 @@ macro drawTcp S F
 
 	; sends: compact name + level slots, only when the track has sends
 	set tcp.sendlist !showSends{0} [0] + [sendX{0} levelY{0} sendW{0}] * Sv [0 0 0 20]
-	set tcp.sendlist.font + [2] * Sv [0 20 72 150]
+	set tcp.sendlist.font + + [1] [F] * Sv [0 20 84 172]
 	set tcp.sendlist.margin * Sv [2 0 2 0 0 0 0 0]
 
 	set tcp.io ?tiny{0} [0] + [w row1Y{0}] * Sv [-150 0 24 20]
@@ -153,7 +152,7 @@ macro drawTcp S F
 	; ---- input row (armed only): input selector + monitoring --------------------
 	set inW - w nameX{0}
 	set tcp.recinput inputRow{0}==0 [0] + [nameX{0} inputY{0} inW{0}] * Sv [2 0 -58 20]
-	set tcp.recinput.font + [2] [F]
+	set tcp.recinput.font + [1] [F]
 	set tcp.recinput.color [$TEXT$]
 	set tcp.recinput.margin * Sv [7 0 16 0]
 	set tcp.recmon inputRow{0}==0 [0] + [w inputY{0}] * Sv [-28 0 20 20]
@@ -188,13 +187,7 @@ macro drawTcp S F
 	front tcp.volume tcp.meter tcp.foldercomp
 endmacro
 
-drawTcp 1 0
-Layout "A"
-	drawTcp 1 0
-endLayout
-Layout "200%_A" "200"
-	drawTcp 2 10
-endLayout
+$LAYOUTS drawTcp$
 
 #<
 #>--------------------------------------------------------------- MASTER TRACK ---
@@ -209,7 +202,7 @@ macro drawMasterTcp S F
 
 	set master.tcp.label + [0 row1Y{0}] * Sv [33 0 120 20]
 	set master.tcp.label.margin * Sv [3 0 4 0]
-	set master.tcp.label.font + [4] [F]
+	set master.tcp.label.font + [2] [F]
 	set master.tcp.label.color [$TEXT$]
 
 	set volW * S 120
@@ -228,7 +221,7 @@ macro drawMasterTcp S F
 	set master.tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
 	set master.tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-348 0 42 20]
 	set master.tcp.volume.label.margin [0 0 0 0 1]
-	set master.tcp.volume.label.font + [2] [F]
+	set master.tcp.volume.label.font + [1] [F]
 	set master.tcp.volume.label.color [$TEXT_2$]
 	set master.tcp.pan + [w row1Y{0}] * Sv [-176 0 20 20]
 	set master.tcp.pan.fadermode [1]
@@ -253,13 +246,7 @@ macro drawMasterTcp S F
 	set master.tcp.custom.bg.color ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL_RAISED$ 255]
 endmacro
 
-drawMasterTcp 1 0
-Layout "A"
-	drawMasterTcp 1 0
-endLayout
-Layout "200%_A" "200"
-	drawMasterTcp 2 10
-endLayout
+$LAYOUTS drawMasterTcp$
 
 #<
 #>--------------------------------------------------------- ENVELOPE PANEL ---
@@ -276,11 +263,11 @@ macro drawEnvcp S F
 	set envcp.arm + [panelX{0} rowY{0}] * Sv [8 0 20 20]
 	set envcp.label + [nameX{0} rowY{0}] * Sv [0 0 100 20]
 	set envcp.label.margin * Sv [3 0 4 0]
-	set envcp.label.font + [3] [F]
+	set envcp.label.font + [2] [F]
 	set envcp.label.color [$TEXT_2$]
 	set envcp.value + [nameX{0} rowY{0}] * Sv [100 0 52 20]
 	set envcp.value.margin [0 0 0 0 1]
-	set envcp.value.font + [2] [F]
+	set envcp.value.font + [1] [F]
 	set envcp.value.color [$TEXT_3$]
 	set faderX + nameX{0} * S 158
 	set faderW - - w faderX{0} * S 70
@@ -300,13 +287,7 @@ macro drawEnvcp S F
 	set envcp.custom.bg.color [0 0 0 0 $ENV_BG$ 255]
 endmacro
 
-drawEnvcp 1 0
-Layout "A"
-	drawEnvcp 1 0
-endLayout
-Layout "200%_A" "200"
-	drawEnvcp 2 10
-endLayout
+$LAYOUTS drawEnvcp$
 
 #<
 #>-------------------------------------------------------------------- MIXER ---
@@ -323,7 +304,7 @@ macro drawMcp S F
 	set labelW - w labelX{0}
 	set mcp.label + [labelX{0} 0 labelW{0}] * Sv [0 5 0 20]
 	set mcp.label.margin * Sv [3 0 3 0 0.5]
-	set mcp.label.font + [3] [F]
+	set mcp.label.font + [2] [F]
 	set mcp.label.color ?track_selected [255 255 255] [$TEXT$]
 
 	; vertical budget: name | inserts+sends (flexible) | pan | fader (min 130) | buttons
@@ -340,9 +321,9 @@ macro drawMcp S F
 	; inserts / sends
 	set mcp.extmixer.mode [1]
 	set mcp.extmixer.position + [0 top{0} w extH{0}] * Sv [3 0 -6 0]
-	set mcp.fxlist.font + [2] [F]
+	set mcp.fxlist.font + [1] [F]
 	set mcp.fxlist.margin * Sv [5 0 4 0 0 0 0 0]
-	set mcp.sendlist.font + [2] [F]
+	set mcp.sendlist.font + [1] [F]
 	set mcp.sendlist.margin * Sv [5 0 4 0 0 0 0 0]
 	set mcp.fxparm.font + [1] [F]
 
@@ -356,7 +337,7 @@ macro drawMcp S F
 	set faderY + panY{0} panBlock{0}
 	set mcp.volume.label + [0 faderY{0}] * Sv [0 0 42 14]
 	set mcp.volume.label.margin [0 0 0 0 0.5]
-	set mcp.volume.label.font + [2] [F]
+	set mcp.volume.label.font + [1] [F]
 	set mcp.volume.label.color [$TEXT$]
 	set mcp.volume + [0 faderY{0} 0 faderH{0}] * Sv [7 18 26 -22]
 	set mcp.volume.fadermode [0]
@@ -387,13 +368,7 @@ macro drawMcp S F
 	front mcp.foldercomp
 endmacro
 
-drawMcp 1 0
-Layout "A"
-	drawMcp 1 0
-endLayout
-Layout "200%_A" "200"
-	drawMcp 2 10
-endLayout
+$LAYOUTS drawMcp$
 
 #<
 #>------------------------------------------------------------- MASTER MIXER ---
@@ -405,7 +380,7 @@ macro drawMasterMcp S F
 
 	set master.mcp.label + [0 0 w] * Sv [0 5 0 20]
 	set master.mcp.label.margin [0 0 0 0 0.5]
-	set master.mcp.label.font + [5] [F]
+	set master.mcp.label.font + [2] [F]
 	set master.mcp.label.color [$TEXT$]
 
 	set top * S 29
@@ -419,9 +394,9 @@ macro drawMasterMcp S F
 	set extH extH{0}<0 0 .
 	set master.mcp.extmixer.mode [1]
 	set master.mcp.extmixer.position + [0 top{0} w extH{0}] * Sv [3 0 -6 0]
-	set master.mcp.fxlist.font + [2] [F]
+	set master.mcp.fxlist.font + [1] [F]
 	set master.mcp.fxlist.margin * Sv [5 0 4 0 0 0 0 0]
-	set master.mcp.sendlist.font + [2] [F]
+	set master.mcp.sendlist.font + [1] [F]
 
 	set panY + top{0} extH{0}
 	set halfW * 0.5 w
@@ -431,7 +406,7 @@ macro drawMasterMcp S F
 	set faderY + panY{0} panBlock{0}
 	set master.mcp.volume.label + [0 faderY{0}] * Sv [0 0 42 14]
 	set master.mcp.volume.label.margin [0 0 0 0 0.5]
-	set master.mcp.volume.label.font + [2] [F]
+	set master.mcp.volume.label.font + [1] [F]
 	set master.mcp.volume.label.color [$TEXT$]
 	set master.mcp.volume + [0 faderY{0} 0 faderH{0}] * Sv [7 18 26 -22]
 	set master.mcp.meter + [0 faderY{0} 0 faderH{0}] * Sv [42 2 48 -6]
@@ -456,13 +431,7 @@ macro drawMasterMcp S F
 	set master.mcp.custom.bg.color [0 0 0 0 $PANEL_RAISED$ 255]
 endmacro
 
-drawMasterMcp 1 0
-Layout "A"
-	drawMasterMcp 1 0
-endLayout
-Layout "200%_A" "200"
-	drawMasterMcp 2 10
-endLayout
+$LAYOUTS drawMasterMcp$
 
 #<
 #>---------------------------------------------------------------- TRANSPORT ---
@@ -497,18 +466,18 @@ macro drawTrans S F
 	set trans.bpm.tap.color [$TEXT_3$]
 	set trans.bpm.tap.margin * Sv [0 3 0 0 0.5]
 	set trans.bpm.edit + [w y{0}] * Sv [-136 13 76 17]
-	set trans.bpm.edit.font + [4] [F]
+	set trans.bpm.edit.font + [2] [F]
 	set trans.bpm.edit.color [$TEXT$]
 	set trans.bpm.edit.margin [0 0 0 0 0.5]
 	custom trans.custom.sigBox '' 0 '' 'transSectionBg'
 	set trans.custom.sigBox + [w y{0}] * Sv [-54 0 44 30]
 	set trans.curtimesig + [w y{0}] * Sv [-54 0 44 30]
-	set trans.curtimesig.font + [4] [F]
+	set trans.curtimesig.font + [2] [F]
 	set trans.curtimesig.color [$TEXT$]
 
 	set selW - w * S 700
 	set trans.sel selW{0}<0 [0] + [w y{0}] * Sv [-460 0 316 30]
-	set trans.sel.font + [2] [F]
+	set trans.sel.font + [1] [F]
 	set trans.sel.color [$TEXT_2$]
 	set trans.sel.margin [0 0 0 0 1]
 
@@ -518,14 +487,8 @@ macro drawTrans S F
 
 endmacro
 
-drawTrans 1 0
-Layout "A"
-	drawTrans 1 0
-endLayout
-Layout "200%_A" "200"
-	drawTrans 2 10
-endLayout
+$LAYOUTS drawTrans$
 
 #<
 
-layout_dpi_translate 'A' 1.74 '200%_A'
+$DPI_RULES$

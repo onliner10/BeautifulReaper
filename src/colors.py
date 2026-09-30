@@ -211,7 +211,7 @@ def theme_colors():
     s("mcp_sends_normal", P.TEXT)
     s("mcp_sends_muted", P.TEXT_3)
     s("mcp_send_midihw", P.AUTO_PREVIEW)
-    s("mcp_sends_levels", P.ACCENT)
+    s("mcp_sends_levels", P.SEND_LEVEL)
     s("mcp_fx_normal", P.TEXT)
     s("mcp_fx_bypassed", P.FX_BYPASS)
     s("mcp_fx_offlined", P.REC)
@@ -385,35 +385,30 @@ def logfont(size_px, weight=500, face="Inter"):
     return b.hex().upper()
 
 
-# Font slots referenced from rtconfig.txt (".font" values 1..5; 6..10 / 11..15 are
-# the 1.5x / 2x versions). Inter ships with REAPER 7.
-FONT_SIZES = [
-    (1, 10, 500),   # tiny: meter scale, send levels
-    (2, 11, 500),   # small: values, dB readouts
-    (3, 12, 500),   # body: fx list, input names
-    (4, 13, 500),   # track names
-    (5, 13, 600),   # emphasis: master strip name
-]
+# Font slots referenced from rtconfig.txt. REAPER has 15 theme font slots, so
+# each UI scale step gets two: small (values, sends, inputs) and name (track
+# names). Step k uses slots 1+2k and 2+2k. Inter ships with REAPER 7.
+FONT_SMALL, FONT_NAME = 11, 13
 
 
-def fonts():
+def fonts(scales):
     out = {"lb_font": logfont(12, 500), "lb_font2": logfont(11, 500),
            "tl_font": logfont(11, 500), "mi_font": logfont(11, 500),
            "trans_font": logfont(22, 500), "user_font0": logfont(13, 500)}
-    for idx, size, weight in FONT_SIZES:
-        out["user_font%d" % idx] = logfont(size, weight)
-        out["user_font%d" % (idx + 5)] = logfont(round(size * 1.5), weight)
-        out["user_font%d" % (idx + 10)] = logfont(size * 2, weight)
+    for k, pct in enumerate(scales):
+        f = pct / 100
+        out["user_font%d" % (1 + 2 * k)] = logfont(round(FONT_SMALL * f), 500)
+        out["user_font%d" % (2 + 2 * k)] = logfont(round(FONT_NAME * f), 500)
     return out
 
 
-def write_theme_file(path, img_dir_name):
+def write_theme_file(path, img_dir_name, scales):
     lines = ["[color theme]"]
     for k, v in theme_colors().items():
         lines.append("%s=%d" % (k, v))
     lines.append("[REAPER]")
     lines.append("ui_img=%s" % img_dir_name)
-    for k, v in fonts().items():
+    for k, v in fonts(scales).items():
         lines.append("%s=%s" % (k, v))
     with open(path, "w", newline="\r\n") as f:
         f.write("\n".join(lines) + "\n")
