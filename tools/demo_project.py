@@ -146,10 +146,11 @@ def item(pos, length, name, wav, color=None):
 
 
 def track(name, color, isbus="0 0", items="", fx=(), vol=1.0, pan=0.0, mute=0, solo=0, rec="0 0 0 0 0 0 0",
-          height=32, sel=0, fcomp=0, recv="", env="", bypass_last=False):
+          height=32, sel=0, fcomp=0, recv="", env="", bypass_last=False, automode=0):
     return f"""<TRACK
   NAME "{name}"
   PEAKCOL {color}
+  AUTOMODE {automode}
   VOLPAN {vol} {pan} -1 -1 1
   MUTESOLO {mute} {solo} 0
   SEL {sel}
@@ -176,11 +177,20 @@ def main():
 
     C = {"drums": col("FF6B5A"), "bass": col("FFB23F"), "keys": col("7BD88F"), "pad": col("4FC3F7"),
          "vox": col("B39DFF"), "fx": col("FF7AC6"), "bus": col("8E8E93")}
+    def envelope(tag, guid, pts, height=34, arm=0, color=""):
+        body = "".join("    PT %s %s 0\n" % p for p in pts)
+        return (f"  <{tag}\n    EGUID {{00000000-0000-0000-0000-00000000000{guid}}}\n    ACT 1 -1\n"
+                f"    VIS 1 1 1\n    LANEHEIGHT {height} 0\n    ARM {arm}\n    DEFSHAPE 0 -1 -1\n" + body + "  >\n")
+
+    beat = 60.0 / BPM
+    pan_env = envelope("PANENV2", 2, [(0, 0), (4 * beat * 4, -0.6), (8 * beat * 4, 0.6), (12 * beat * 4, -0.2), (16 * beat * 4, 0.4)], arm=1)
+    mute_env = envelope("MUTEENV", 3, [(0, 1), (8 * beat * 4, 0), (12 * beat * 4, 1)])
+    pad_vol = envelope("VOLENV2", 4, [(0, 0.2), (8 * beat * 4, 1), (12 * beat * 4, 0.6), (16 * beat * 4, 0.9)])
     vol_env = """  <VOLENV2
     EGUID {00000000-0000-0000-0000-000000000001}
     ACT 1 -1
     VIS 1 1 1
-    LANEHEIGHT 30 0
+    LANEHEIGHT 34 0
     ARM 1
     DEFSHAPE 0 -1 -1
     PT 0 0.5 0
@@ -198,13 +208,13 @@ def main():
         track("Tops", C["drums"], "1 1"),
         track("Hats", C["drums"], items=loop("hats.wav", "Hats", L, 3), vol=0.6, pan=0.25),
         track("Shaker", C["drums"], "2 -2", items=loop("hats.wav", "Shaker", 2 * L, 2), vol=0.5, pan=-0.2),
-        track("Bass", C["bass"], items=loop("bass.wav", "Bass", 0, 4), fx=["utility/volume", "utility/volume"], sel=1, env=vol_env),
+        track("Bass", C["bass"], items=loop("bass.wav", "Bass", 0, 4), fx=["utility/volume", "utility/volume"], sel=1, env=vol_env, automode=1),
         track("Synths", C["keys"], "1 1", fcomp=2),
         track("Lead", C["keys"], items=loop("pad.wav", "Lead", L, 2)),
         track("Arp", C["keys"], "2 -1", items=loop("pad.wav", "Arp", 0, 4)),
-        track("Pad", C["pad"], items=loop("pad.wav", "Pad", 0, 4), vol=0.5, pan=-0.3, mute=1),
+        track("Pad", C["pad"], items=loop("pad.wav", "Pad", 0, 4), vol=0.5, pan=-0.3, mute=1, env=pad_vol + mute_env, automode=4),
         track("Lead Vocal", C["vox"], items=loop("vox.wav", "Vox take 3", L, 2), rec="1 0 1 0 0 0 0", height=56,
-              fx=["utility/volume", "utility/volume", "utility/volume"], solo=0, bypass_last=True),
+              fx=["utility/volume", "utility/volume", "utility/volume"], solo=0, bypass_last=True, env=pan_env, automode=2),
         track("Reverb", C["fx"], fx=["utility/volume"], vol=0.7,
               recv="  AUXRECV 11 0 0.5 0 0 0 0 0 0 -1:U 0 -1 ''\n  AUXRECV 6 0 0.3 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
     ]

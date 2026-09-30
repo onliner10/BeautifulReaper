@@ -263,18 +263,24 @@ for _suffix, _col in ENV_MODES.items():
 
 
 def route_glyph(cv, gcol, st, w=BTN_W):
+    """Routing: two opposing arrows."""
     cx, cy = w / 2, BTN_H / 2
-    cv.circle(cx - 4, cy + 2.5, 1.7, fill=gcol)
-    cv.circle(cx + 4, cy - 2.5, 1.7, fill=gcol)
-    cv.line([(cx - 4, cy + 2.5), (cx - 1, cy + 2.5), (cx + 1, cy - 2.5), (cx + 4, cy - 2.5)], gcol, 1.2)
+    cv.line([(cx - 5, cy - 2.5), (cx + 4.5, cy - 2.5)], gcol, 1.3)
+    cv.line([(cx + 2.2, cy - 4.8), (cx + 4.8, cy - 2.5), (cx + 2.2, cy - 0.2)], gcol, 1.3)
+    cv.line([(cx + 5, cy + 2.5), (cx - 4.5, cy + 2.5)], gcol, 1.3)
+    cv.line([(cx - 2.2, cy + 0.2), (cx - 4.8, cy + 2.5), (cx - 2.2, cy + 4.8)], gcol, 1.3)
 
 
+# track_io[_r][_s][_dis]: _s/_r = has sends/receives (marked with an accent dot),
+# _dis = master/parent send disabled (dimmed glyph).
 for _suffix in ("", "_r", "_s", "_s_r"):
     for _dis in ("", "_dis"):
-        def _io(s, dis=_dis, w=BTN_W):
+        def _io(s, dis=_dis, has=bool(_suffix), w=BTN_W):
             def draw(cv, st):
                 cv.rrect(1, 2, w - 2, BTN_H - 4, 4, fill=c(face(st, P.CONTROL)))
                 route_glyph(cv, c(P.TEXT_3 if dis else (P.TEXT if st == "hover" else P.TEXT_2)), st, w)
+                if has:
+                    cv.circle(w - 3.5, 3.5, 2.2, fill=c(P.ACCENT))
             return frames3(w, BTN_H, s, draw)
         image("track_io" + _suffix + _dis)(_io)
         image("mcp_io" + _suffix + _dis)(lambda s, f=_io: f(s))
@@ -335,6 +341,13 @@ for _n in ("track_folder_off", "track_folder_on", "track_folder_last", "mcp_fold
 
 @image("tcp_volbg")
 def tcp_volbg(s):
+    # Transparent: in the track panel the level meter is drawn as the fader track.
+    cv = Canvas(22, 20, s)
+    return pink_border(cv.result(), 10 * s, 1 * s, 10 * s, 1 * s)
+
+
+@image("envcp_faderbg")
+def envcp_faderbg(s):
     cv = Canvas(22, 20, s)
     cv.rrect(0, 8.5, 22, 3, 1.5, fill=c(P.WELL))
     return pink_border(cv.result(), 10 * s, 1 * s, 10 * s, 1 * s)
@@ -342,10 +355,9 @@ def tcp_volbg(s):
 
 @image("tcp_volthumb")
 def tcp_volthumb(s):
-    cv = Canvas(10, 18, s)
-    cv.rrect(1, 1, 8, 16, 3, fill=c("#000000", 90))
-    cv.rrect(1, 0.5, 8, 16, 3, fill=c("#D9DADF"))
-    cv.line([(5, 4.5), (5, 12)], c("#8E8F95"), 1)
+    cv = Canvas(8, 16, s)
+    cv.rrect(0.5, 1, 7, 15, 2.5, fill=c("#000000", 110))
+    cv.rrect(0.5, 0.5, 7, 14.5, 2.5, fill=c("#E4E5EA"))
     return cv.result()
 
 
@@ -498,11 +510,9 @@ def meter_badge(glyph, col):
     return f
 
 
-image("meter_mute")(meter_badge("M", P.MUTE))
-image("meter_foldermute")(meter_badge("M", P.mix(P.MUTE, P.PANEL, 0.4)))
-image("meter_automute")(meter_badge("A", P.mix(P.MUTE, P.PANEL, 0.2)))
-image("meter_unsolo")(meter_badge("S", P.mix(P.SOLO, P.PANEL, 0.4)))
-image("meter_solodim")(meter_badge("S", P.mix(P.SOLO, P.PANEL, 0.6)))
+# Mute/solo state is already shown by the lit M/S buttons - no badge on the meter.
+for _n in ("meter_mute", "meter_foldermute", "meter_automute", "meter_unsolo", "meter_solodim"):
+    image(_n)(solid("#000000", 16, 16) if False else (lambda s: Image.new("RGBA", (16 * s, 16 * s), (0, 0, 0, 0))))
 
 
 # ---------------------------------------------------------- transport --------
@@ -625,8 +635,8 @@ def small_toggle(label, on_col=None, w=36, h=18):
 
 image("envcp_arm_off")(lambda s: recarm(s, False))
 image("envcp_arm_on")(lambda s: recarm(s, True))
-image("envcp_bypass_off")(small_toggle("ON", P.AUTO_READ))
-image("envcp_bypass_on")(small_toggle("OFF", None))
+image("envcp_bypass_off")(small_toggle("ON"))
+image("envcp_bypass_on")(small_toggle("OFF", P.FX_BYPASS))
 image("envcp_learn")(small_toggle("LRN"))
 image("envcp_learn_on")(small_toggle("LRN", P.ACCENT))
 image("envcp_parammod")(small_toggle("MOD"))
@@ -644,7 +654,6 @@ def envcp_hide(s):
     return frames3(20, 20, s, draw)
 
 
-image("envcp_faderbg")(tcp_volbg)
 image("envcp_fader")(tcp_volthumb)
 
 
@@ -975,6 +984,13 @@ image("toolbar_filter_solo")(toolbar_icon(t_filter, on=True, on_col=P.SOLO))
 image("toolbar_ripple_off")(toolbar_icon(t_ripple_off))
 image("toolbar_ripple_one")(toolbar_icon(t_ripple_one, on=True, on_col=P.FX_BYPASS))
 image("toolbar_ripple_all")(toolbar_icon(t_ripple_all, on=True, on_col=P.REC))
+
+
+# Master mono check: labelled, lit (orange = "you are not hearing stereo") when on.
+image("track_stereo")(lambda s: pill_button(s, "Mono", None, w=42, text_size=9))
+image("track_mono")(lambda s: pill_button(s, "Mono", P.FX_BYPASS, w=42, text_size=9))
+image("mcp_stereo")(lambda s: pill_button(s, "Mono", None, w=42, text_size=9))
+image("mcp_mono")(lambda s: pill_button(s, "Mono", P.FX_BYPASS, w=42, text_size=9))
 
 
 def generate(outdir, scale):

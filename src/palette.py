@@ -46,7 +46,7 @@ AUTO_LATCH = "#BF5AF2"
 AUTO_PREVIEW = "#64D2FF"
 
 # Meters (bottom -> top).
-METER_OFF = "#26272B"    # unlit meter segments
+METER_OFF = "#3A3C42"    # unlit meter segments (doubles as the fader track)
 METER_LOW = "#30D158"
 METER_MID = "#FFD60A"
 METER_HIGH = "#FF9F0A"

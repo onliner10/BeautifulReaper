@@ -35,17 +35,20 @@ gen_vol_zeroline 00000000
 gen_pan_zeroline 00000000
 
 #>--------------------------------------------------------------- TRACK PANEL ---
-; The track panel is the arrangement header. It holds what you need while
-; arranging and recording - nothing that belongs to the mixer. Volume, pan
-; and metering live in the mixer only, so there is one place for levels.
+; The track panel is the complete channel: everything a producer needs while
+; arranging, recording and balancing lives here, so the mixer can stay closed
+; and the screen height goes to tracks. Wide screens have room to spare
+; horizontally; the panel spends it on one row of controls.
 ;
-;   |color| [>] Name ......................... [A] [FX] [M] [S] [o]
-;           [ Input 1                        v ]            [mon]    <- armed only
+;   |color| [>] Name ..... [==meter==|==] -2.1 (pan) [io] [A] [FX] [M] [S] [o]
+;           [ Input 1                                   v ]           [mon]   <- armed only
+;
+; When the panel is narrow the fader goes first, then the name shortens.
 
 macro drawTcp S F
 	clear tcp.*
 	set Sv [S S S S S S S S]
-	set tcp.size * Sv [260 32 200]
+	set tcp.size * Sv [440 32 240]
 
 	set step * S 16
 	set indent * folderdepth step{0}
@@ -65,16 +68,45 @@ macro drawTcp S F
 	set superH * S 10
 	set super h<superH{0} 1 0
 
-	; row 1
+	; row 1 (right-anchored columns so faders line up at every tree depth):
+	;   [>] Name ........ [===meter/fader===] -2.1  (pan) [io] [A] [FX] [M] [S] [o]
 	set foldX + panelX{0} * S 8
 	set tcp.foldercomp ?tiny{0} [0] folderstate==1 + [foldX{0} row1Y{0}] * Sv [0 0 20 20] [0]
 	set nameX + foldX{0} * S 21
-	set nameW - - w nameX{0} * S 124
+
+	; fader column: right edge fixed, left edge at w-342 unless the name needs room,
+	; then it shrinks; below 48pt it hides and the name takes the space.
+	set volR - w * S 222
+	set volX - w * S 342
+	set minNameR + nameX{0} * S 72
+	set volX volX{0}<minNameR{0} minNameR{0} .
+	set volW - volR{0} volX{0}
+	set minVol * S 48
+	set showVol ?tiny{0} 0 volW{0}<minVol{0} 0 1
+	set nameW ?showVol{0} - - volX{0} nameX{0} * S 8 - - w nameX{0} * S 178
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
 	set tcp.label.font + [4] [F]
 	set tcp.label.color ?track_selected [255 255 255] [$TEXT$]
 
+	; level: the meter is the fader's track
+	set tcp.volume !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [0 0 0 20]
+	set tcp.volume.fadermode [0]
+	set tcp.meter !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [4 8 -8 5]
+	set tcp.meter.vu.div [S]
+	set tcp.meter.readout.color [0 0 0 0 0 0 0 0]
+	set tcp.meter.scale.color.lit.bottom [0 0 0 0 0 0 0 0]
+	set tcp.meter.scale.color.lit.top [0 0 0 0 0 0 0 0]
+	set tcp.meter.scale.color.unlit.bottom [0 0 0 0 0 0 0 0]
+	set tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
+	set tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-218 0 42 20]
+	set tcp.volume.label.margin [0 0 0 0 1]
+	set tcp.volume.label.font + [2] [F]
+	set tcp.volume.label.color [$TEXT_2$]
+	set tcp.pan ?tiny{0} [0] + [w row1Y{0}] * Sv [-172 0 20 20]
+	set tcp.pan.fadermode [1]
+
+	set tcp.io ?tiny{0} [0] + [w row1Y{0}] * Sv [-146 0 20 20]
 	set tcp.env ?tiny{0} [0] + [w row1Y{0}] * Sv [-122 0 20 20]
 	set tcp.fx ?tiny{0} [0] + [w row1Y{0}] * Sv [-99 0 24 20]
 	set tcp.mute ?tiny{0} [0] + [w row1Y{0}] * Sv [-72 0 20 20]
@@ -115,7 +147,7 @@ macro drawTcp S F
 	custom tcp.custom.bg
 	set tcp.custom.bg [0 0 w cardH{0}]
 	set tcp.custom.bg.color ?super{0} [0 0 0 0 $BG_DEEP$ 255] ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL$ 255]
-	front tcp.foldercomp
+	front tcp.foldercomp tcp.meter tcp.volume
 endmacro
 
 drawTcp 1 0
@@ -132,7 +164,7 @@ endLayout
 macro drawMasterTcp S F
 	clear master.tcp.*
 	set Sv [S S S S S S S S]
-	set master.tcp.size * Sv [260 32 200]
+	set master.tcp.size * Sv [440 32 240]
 	set gap * S 1
 	set cardH - h gap{0}
 	set row1Y * 0.5 - cardH{0} * S 20
@@ -141,9 +173,32 @@ macro drawMasterTcp S F
 	set master.tcp.label.margin * Sv [3 0 4 0]
 	set master.tcp.label.font + [4] [F]
 	set master.tcp.label.color [$TEXT$]
+
+	set volW * S 120
+	set volX - w * S 342
+	set minVolX * S 160
+	set showVol volX{0}<minVolX{0} 0 1
+	set master.tcp.volume !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [0 0 0 20]
+	set master.tcp.volume.fadermode [0]
+	set master.tcp.meter !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [4 8 -8 5]
+	set master.tcp.meter.vu.div [S]
+	set master.tcp.meter.readout.color [0 0 0 0 0 0 0 0]
+	set master.tcp.meter.rmsreadout.color [0 0 0 0 0 0 0 0]
+	set master.tcp.meter.scale.color.lit.bottom [0 0 0 0 0 0 0 0]
+	set master.tcp.meter.scale.color.lit.top [0 0 0 0 0 0 0 0]
+	set master.tcp.meter.scale.color.unlit.bottom [0 0 0 0 0 0 0 0]
+	set master.tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
+	set master.tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-218 0 42 20]
+	set master.tcp.volume.label.margin [0 0 0 0 1]
+	set master.tcp.volume.label.font + [2] [F]
+	set master.tcp.volume.label.color [$TEXT_2$]
+	set master.tcp.pan + [w row1Y{0}] * Sv [-172 0 20 20]
+	set master.tcp.pan.fadermode [1]
+	set master.tcp.io + [w row1Y{0}] * Sv [-146 0 20 20]
 	set master.tcp.env + [w row1Y{0}] * Sv [-122 0 20 20]
 	set master.tcp.fx + [w row1Y{0}] * Sv [-99 0 24 20]
 	set master.tcp.mute + [w row1Y{0}] * Sv [-72 0 20 20]
+	set master.tcp.mono + [w row1Y{0}] * Sv [-50 0 42 20]
 
 	custom master.tcp.custom.strip
 	set master.tcp.custom.strip + [0 0 0 cardH{0}] * Sv [4 0 3 0]
@@ -156,6 +211,7 @@ macro drawMasterTcp S F
 	set master.tcp.custom.gap.color [0 0 0 0 $BG_DEEP$ 255]
 	custom master.tcp.custom.bg
 	set master.tcp.custom.bg [0 0 w cardH{0}]
+	front master.tcp.meter master.tcp.volume
 	set master.tcp.custom.bg.color ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL_RAISED$ 255]
 endmacro
 
