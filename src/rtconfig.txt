@@ -1,0 +1,420 @@
+; Beautiful Reaper - rtconfig.txt (WALTER)
+; Generated from src/rtconfig.txt by src/build.py: $TOKENS$ are palette colors (r g b).
+;
+; Design rules
+;  * One layout, adapted automatically. Controls appear when there is room
+;    for them or when the track state makes them relevant (e.g. the input
+;    selector and monitor button only exist while a track is armed).
+;  * Nothing is shown twice. The track panel has a slim meter with no numbers;
+;    the mixer has the one full meter with a single scale.
+;  * Hit targets are at least 20x20pt. The folder disclosure chevron is the
+;    first thing on the row, not a tiny icon in a corner.
+
+version 7.0
+use_pngs 1
+use_overlays 0
+warnings all
+tinttcp 298
+peaksedges 0
+tcp_showborders 0
+mcp_showborders 0
+trans_showborders 0
+tcp_folderindent 0
+tcp_heights 1 24 32 56
+tcp_master_minheight 40
+envcp_min_height 24
+mcp_min_height 300 80
+misc_dpi_translate 174 200
+
+tcp_vol_zeroline 00000000
+tcp_pan_zeroline 00000000
+mcp_vol_zeroline 60FFFFFF
+mcp_pan_zeroline 00000000
+trans_speed_zeroline 00000000
+gen_vol_zeroline 00000000
+gen_pan_zeroline 00000000
+
+#>--------------------------------------------------------------- TRACK PANEL ---
+; The track panel is the arrangement header. It holds what you need while
+; arranging and recording - nothing that belongs to the mixer. Volume, pan
+; and metering live in the mixer only, so there is one place for levels.
+;
+;   |color| [>] Name ......................... [A] [FX] [M] [S] [o]
+;           [ Input 1                        v ]            [mon]    <- armed only
+
+macro drawTcp S F
+	clear tcp.*
+	set Sv [S S S S S S S S]
+	set tcp.size * Sv [260 32 200]
+
+	set indent * S * folderdepth 14
+	set mx * S 4
+	set gap * S 1
+	set cardH - h gap{0}
+	; content is vertically centred: one row, or two while armed and tall enough
+	set armRowH * S 50
+	set showRow2 ?recarm cardH{0}<armRowH{0} 0 1 0
+	set blockH ?showRow2{0} * S 46 * S 20
+	set row1Y * 0.5 - cardH{0} blockH{0}
+	set row2Y + row1Y{0} * S 26
+	set tinyH * S 18
+	set tiny h<tinyH{0} 1 0
+	set superH * S 10
+	set super h<superH{0} 1 0
+
+	; row 1
+	set foldX + + mx{0} indent{0} * S 8
+	set tcp.foldercomp ?tiny{0} [0] folderstate==1 + [foldX{0} row1Y{0}] * Sv [0 0 20 20] [0]
+	set nameX + foldX{0} * S 21
+	set nameW - - w nameX{0} * S 124
+	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
+	set tcp.label.margin * Sv [3 0 4 0]
+	set tcp.label.font folderstate==1 + [5] [F] + [4] [F]
+	set tcp.label.color ?track_selected [255 255 255] [$TEXT$]
+
+	set tcp.env ?tiny{0} [0] + [w row1Y{0}] * Sv [-122 0 20 20]
+	set tcp.fx ?tiny{0} [0] + [w row1Y{0}] * Sv [-99 0 24 20]
+	set tcp.mute ?tiny{0} [0] + [w row1Y{0}] * Sv [-72 0 20 20]
+	set tcp.solo ?tiny{0} [0] + [w row1Y{0}] * Sv [-50 0 20 20]
+	set tcp.recarm ?tiny{0} [0] + [w row1Y{0}] * Sv [-28 0 20 20]
+
+	; row 2 - recording: input selector + monitoring, only while armed
+	set inW - w nameX{0}
+	set tcp.recinput !showRow2{0} [0] + [nameX{0} row2Y{0} inW{0}] * Sv [2 0 -58 20]
+	set tcp.recinput.font + [2] [F]
+	set tcp.recinput.color [$TEXT$]
+	set tcp.recinput.margin * Sv [7 0 16 0]
+	set tcp.recmon !showRow2{0} [0] + [w row2Y{0}] * Sv [-28 0 20 20]
+
+	; surfaces - declared last so they draw underneath (first declared is on top)
+	custom tcp.custom.strip
+	set tcp.custom.strip ?super{0} [0] + [mx{0} 0 0 cardH{0}] * Sv [0 0 3 0]
+	set tcp.custom.strip.color ?trackcolor_valid [0 0 0 0 trackcolor_r trackcolor_g trackcolor_b 255] [0 0 0 0 $CONTROL$ 255]
+	custom tcp.custom.gap
+	set tcp.custom.gap [0 cardH{0} w gap{0}]
+	custom tcp.custom.gutter
+	set tcp.custom.gutter [0 0 mx{0} h]
+	set tcp.custom.gutter.color [0 0 0 0 $BG_DEEP$ 255]
+	set tcp.custom.gap.color [0 0 0 0 $BG_DEEP$ 255]
+	custom tcp.custom.bg
+	set tcp.custom.bg [0 0 w cardH{0}]
+	set tcp.custom.bg.color ?super{0} [0 0 0 0 $BG_DEEP$ 255] ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL$ 255]
+	front tcp.foldercomp
+endmacro
+
+drawTcp 1 0
+Layout "A"
+	drawTcp 1 0
+endLayout
+Layout "200%_A" "200"
+	drawTcp 2 10
+endLayout
+
+#<
+#>--------------------------------------------------------------- MASTER TRACK ---
+
+macro drawMasterTcp S F
+	clear master.tcp.*
+	set Sv [S S S S S S S S]
+	set master.tcp.size * Sv [260 32 200]
+	set gap * S 1
+	set cardH - h gap{0}
+	set row1Y * 0.5 - cardH{0} * S 20
+
+	set master.tcp.label + [0 row1Y{0}] * Sv [33 0 120 20]
+	set master.tcp.label.margin * Sv [3 0 4 0]
+	set master.tcp.label.font + [4] [F]
+	set master.tcp.label.color [$TEXT$]
+	set master.tcp.env + [w row1Y{0}] * Sv [-122 0 20 20]
+	set master.tcp.fx + [w row1Y{0}] * Sv [-99 0 24 20]
+	set master.tcp.mute + [w row1Y{0}] * Sv [-72 0 20 20]
+
+	custom master.tcp.custom.strip
+	set master.tcp.custom.strip + [0 0 0 cardH{0}] * Sv [4 0 3 0]
+	custom master.tcp.custom.gutter
+	set master.tcp.custom.gutter + [0 0 0 h] * Sv [0 0 4 0]
+	set master.tcp.custom.gutter.color [0 0 0 0 $BG_DEEP$ 255]
+	set master.tcp.custom.strip.color [0 0 0 0 $TEXT$ 255]
+	custom master.tcp.custom.gap
+	set master.tcp.custom.gap [0 cardH{0} w gap{0}]
+	set master.tcp.custom.gap.color [0 0 0 0 $BG_DEEP$ 255]
+	custom master.tcp.custom.bg
+	set master.tcp.custom.bg [0 0 w cardH{0}]
+	set master.tcp.custom.bg.color ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL_RAISED$ 255]
+endmacro
+
+drawMasterTcp 1 0
+Layout "A"
+	drawMasterTcp 1 0
+endLayout
+Layout "200%_A" "200"
+	drawMasterTcp 2 10
+endLayout
+
+#<
+#>--------------------------------------------------------- ENVELOPE PANEL ---
+
+macro drawEnvcp S F
+	clear envcp.*
+	set Sv [S S S S S S S S]
+	set envcp.size * Sv [300 100 230]
+	set indent * S * folderdepth 16
+	set rowY * 0.5 - h * S 20
+
+	set nameX + indent{0} * S 34
+	set envcp.arm + [indent{0} rowY{0}] * Sv [12 0 20 20]
+	set envcp.label + [nameX{0} rowY{0}] * Sv [0 0 100 20]
+	set envcp.label.margin * Sv [3 0 4 0]
+	set envcp.label.font + [3] [F]
+	set envcp.label.color [$TEXT_2$]
+	set envcp.value + [nameX{0} rowY{0}] * Sv [100 0 52 20]
+	set envcp.value.margin [0 0 0 0 1]
+	set envcp.value.font + [2] [F]
+	set envcp.value.color [$TEXT_3$]
+	set faderX + nameX{0} * S 158
+	set faderW - - w faderX{0} * S 70
+	set envcp.fader + [faderX{0} rowY{0} faderW{0}] * Sv [0 0 0 20]
+	set envcp.fader.fadermode [0]
+	set envcp.bypass + [w rowY{0}] * Sv [-64 0 36 18]
+	set envcp.hide + [w rowY{0}] * Sv [-26 0 20 20]
+
+	custom envcp.custom.div
+	set envcp.custom.div + [0 h w 2] * Sv [0 -2 0 0]
+	set envcp.custom.div.color [0 0 0 0 $BG_DEEP$ 255]
+	custom envcp.custom.gutter
+	set envcp.custom.gutter + [0 0 0 h] * Sv [0 0 4 0]
+	set envcp.custom.gutter.color [0 0 0 0 $BG_DEEP$ 255]
+	custom envcp.custom.bg
+	set envcp.custom.bg [0 0 w h]
+	set envcp.custom.bg.color [0 0 0 0 $ENV_BG$ 255]
+endmacro
+
+drawEnvcp 1 0
+Layout "A"
+	drawEnvcp 1 0
+endLayout
+Layout "200%_A" "200"
+	drawEnvcp 2 10
+endLayout
+
+#<
+#>-------------------------------------------------------------------- MIXER ---
+
+macro drawMcp S F
+	clear mcp.*
+	set Sv [S S S S S S S S]
+	set mcp.size * Sv [80 400]
+
+	; name (with the folder chevron for folder parents)
+	set mcp.foldercomp folderstate==1 * Sv [1 5 20 20] [0]
+	set mcp.folder folderstate==1 * Sv [1 5 20 20] [0]
+	set labelX folderstate==1 * S 18 0
+	set labelW - w labelX{0}
+	set mcp.label + [labelX{0} 0 labelW{0}] * Sv [0 5 0 20]
+	set mcp.label.margin * Sv [3 0 3 0 0.5]
+	set mcp.label.font + [3] [F]
+	set mcp.label.color ?track_selected [255 255 255] [$TEXT$]
+
+	; vertical budget: name | inserts+sends (flexible) | pan | fader (min 130) | buttons
+	set top * S 29
+	set btnBlock * S 56
+	set panBlock * S 40
+	set avail - - - h top{0} btnBlock{0} panBlock{0}
+	set faderH * 0.6 avail{0}
+	set minF * S 110
+	set faderH faderH{0}<minF{0} minF{0} .
+	set extH - avail{0} faderH{0}
+	set extH extH{0}<0 0 .
+
+	; inserts / sends
+	set mcp.extmixer.mode [1]
+	set mcp.extmixer.position + [0 top{0} w extH{0}] * Sv [3 0 -6 0]
+	set mcp.fxlist.font + [2] [F]
+	set mcp.fxlist.margin * Sv [5 0 4 0 0 0 0 0]
+	set mcp.sendlist.font + [2] [F]
+	set mcp.sendlist.margin * Sv [5 0 4 0 0 0 0 0]
+	set mcp.fxparm.font + [1] [F]
+
+	; pan
+	set panY + top{0} extH{0}
+	set halfW * 0.5 w
+	set mcp.pan + [halfW{0} panY{0}] * Sv [-13 7 26 26]
+	set mcp.pan.fadermode [1]
+
+	; fader + the one real meter
+	set faderY + panY{0} panBlock{0}
+	set mcp.volume.label + [0 faderY{0}] * Sv [0 0 42 14]
+	set mcp.volume.label.margin [0 0 0 0 0.5]
+	set mcp.volume.label.font + [2] [F]
+	set mcp.volume.label.color [$TEXT$]
+	set mcp.volume + [0 faderY{0} 0 faderH{0}] * Sv [7 18 26 -22]
+	set mcp.volume.fadermode [0]
+	set mcp.meter + [0 faderY{0} 0 faderH{0}] * Sv [42 2 32 -6]
+	set mcp.meter.vu.div * Sv [16]
+	set mcp.meter.readout.color [$TEXT_2$ 255 $METER_CLIP$ 255]
+	set mcp.meter.scale.color.lit.bottom [$TEXT_3$ 255 0 0 0 0]
+	set mcp.meter.scale.color.lit.top [$TEXT_3$ 255 0 0 0 0]
+	set mcp.meter.scale.color.unlit.bottom [$TEXT_3$ 255 0 0 0 0]
+	set mcp.meter.scale.color.unlit.top [$TEXT_3$ 255 0 0 0 0]
+
+	; buttons: mute, solo, arm + routing
+	set btnY - h * S 56
+	set mcp.mute + [0 btnY{0}] * Sv [6 0 20 20]
+	set mcp.solo + [0 btnY{0}] * Sv [30 0 20 20]
+	set mcp.recarm + [0 btnY{0}] * Sv [54 0 20 20]
+	set mcp.io + [0 btnY{0}] * Sv [30 24 20 20]
+
+	custom mcp.custom.colorBar
+	set mcp.custom.colorBar + [0 0 w] * Sv [0 0 0 3]
+	set mcp.custom.colorBar.color ?trackcolor_valid [0 0 0 0 trackcolor_r trackcolor_g trackcolor_b 255] [0 0 0 0 $CONTROL$ 255]
+	custom mcp.custom.div
+	set mcp.custom.div + [w 0 1 h] [-1]
+	set mcp.custom.div.color [0 0 0 0 $DIVIDER$ 255]
+	custom mcp.custom.bg
+	set mcp.custom.bg [0 0 w h]
+	set mcp.custom.bg.color ?track_selected [0 0 0 0 $PANEL_SEL$ 255] [0 0 0 0 $PANEL$ 255]
+	front mcp.foldercomp
+endmacro
+
+drawMcp 1 0
+Layout "A"
+	drawMcp 1 0
+endLayout
+Layout "200%_A" "200"
+	drawMcp 2 10
+endLayout
+
+#<
+#>------------------------------------------------------------- MASTER MIXER ---
+
+macro drawMasterMcp S F
+	clear master.mcp.*
+	set Sv [S S S S S S S S]
+	set master.mcp.size * Sv [96 400]
+
+	set master.mcp.label + [0 0 w] * Sv [0 5 0 20]
+	set master.mcp.label.margin [0 0 0 0 0.5]
+	set master.mcp.label.font + [5] [F]
+	set master.mcp.label.color [$TEXT$]
+
+	set top * S 29
+	set btnBlock * S 56
+	set panBlock * S 40
+	set avail - - - h top{0} btnBlock{0} panBlock{0}
+	set faderH * 0.6 avail{0}
+	set minF * S 110
+	set faderH faderH{0}<minF{0} minF{0} .
+	set extH - avail{0} faderH{0}
+	set extH extH{0}<0 0 .
+	set master.mcp.extmixer.mode [1]
+	set master.mcp.extmixer.position + [0 top{0} w extH{0}] * Sv [3 0 -6 0]
+	set master.mcp.fxlist.font + [2] [F]
+	set master.mcp.fxlist.margin * Sv [5 0 4 0 0 0 0 0]
+	set master.mcp.sendlist.font + [2] [F]
+
+	set panY + top{0} extH{0}
+	set halfW * 0.5 w
+	set master.mcp.pan + [halfW{0} panY{0}] * Sv [-13 7 26 26]
+	set master.mcp.pan.fadermode [1]
+
+	set faderY + panY{0} panBlock{0}
+	set master.mcp.volume.label + [0 faderY{0}] * Sv [0 0 42 14]
+	set master.mcp.volume.label.margin [0 0 0 0 0.5]
+	set master.mcp.volume.label.font + [2] [F]
+	set master.mcp.volume.label.color [$TEXT$]
+	set master.mcp.volume + [0 faderY{0} 0 faderH{0}] * Sv [7 18 26 -22]
+	set master.mcp.meter + [0 faderY{0} 0 faderH{0}] * Sv [42 2 48 -6]
+	set master.mcp.meter.vu.div * Sv [18]
+	set master.mcp.meter.readout.color [$TEXT_2$ 255 $METER_CLIP$ 255]
+	set master.mcp.meter.rmsreadout.color [0 0 0 0 0 0 0 0]
+	set master.mcp.meter.vu.rmsdiv * Sv [1]
+	set master.mcp.meter.scale.color.lit.bottom [$TEXT_3$ 255 0 0 0 0]
+	set master.mcp.meter.scale.color.lit.top [$TEXT_3$ 255 0 0 0 0]
+	set master.mcp.meter.scale.color.unlit.bottom [$TEXT_3$ 255 0 0 0 0]
+	set master.mcp.meter.scale.color.unlit.top [$TEXT_3$ 255 0 0 0 0]
+
+	set btnY - h * S 56
+	set master.mcp.mute + [0 btnY{0}] * Sv [26 0 20 20]
+	set master.mcp.io + [0 btnY{0}] * Sv [50 0 20 20]
+
+	custom master.mcp.custom.colorBar
+	set master.mcp.custom.colorBar + [0 0 w] * Sv [0 0 0 3]
+	set master.mcp.custom.colorBar.color [0 0 0 0 $TEXT$ 255]
+	custom master.mcp.custom.bg
+	set master.mcp.custom.bg [0 0 w h]
+	set master.mcp.custom.bg.color [0 0 0 0 $PANEL_RAISED$ 255]
+endmacro
+
+drawMasterMcp 1 0
+Layout "A"
+	drawMasterMcp 1 0
+endLayout
+Layout "200%_A" "200"
+	drawMasterMcp 2 10
+endLayout
+
+#<
+#>---------------------------------------------------------------- TRANSPORT ---
+
+macro drawTrans S F
+	clear trans.*
+	set Sv [S S S S S S S S]
+	set trans.size * Sv [1000 44]
+	set trans.size.minmax * Sv [400 44 3000 88]
+	set trans.size.dockedheight * Sv [44]
+
+	set y * 0.5 - h * S 30
+	set trans.rew + [0 y{0}] * Sv [10 0 30 30]
+	set trans.fwd + [0 y{0}] * Sv [40 0 30 30]
+	set trans.stop + [0 y{0}] * Sv [76 0 30 30]
+	set trans.play + [0 y{0}] * Sv [106 0 30 30]
+	set trans.pause [0]
+	set trans.rec + [0 y{0}] * Sv [136 0 30 30]
+	set trans.repeat + [0 y{0}] * Sv [172 0 30 30]
+
+	custom trans.custom.timeBox '' 0 '' 'transSectionBg'
+	set trans.custom.timeBox + [0 y{0}] * Sv [214 0 300 30]
+	set trans.status + [0 y{0}] * Sv [214 0 300 30]
+	set trans.status.margin * Sv [12 0 12 0 0]
+	set trans.status.color [$TEXT$ 255 0 0 0 0]
+
+	; right side: selection, tempo, signature
+	custom trans.custom.bpmBox '' 0 '' 'transSectionBg'
+	set trans.custom.bpmBox + [w y{0}] * Sv [-136 0 76 30]
+	set trans.bpm.tap + [w y{0}] * Sv [-136 0 76 15]
+	set trans.bpm.tap.font + [1] [F]
+	set trans.bpm.tap.color [$TEXT_3$]
+	set trans.bpm.tap.margin * Sv [0 3 0 0 0.5]
+	set trans.bpm.edit + [w y{0}] * Sv [-136 13 76 17]
+	set trans.bpm.edit.font + [4] [F]
+	set trans.bpm.edit.color [$TEXT$]
+	set trans.bpm.edit.margin [0 0 0 0 0.5]
+	custom trans.custom.sigBox '' 0 '' 'transSectionBg'
+	set trans.custom.sigBox + [w y{0}] * Sv [-54 0 44 30]
+	set trans.curtimesig + [w y{0}] * Sv [-54 0 44 30]
+	set trans.curtimesig.font + [4] [F]
+	set trans.curtimesig.color [$TEXT$]
+
+	set selW - w * S 700
+	set trans.sel selW{0}<0 [0] + [w y{0}] * Sv [-460 0 316 30]
+	set trans.sel.font + [2] [F]
+	set trans.sel.color [$TEXT_2$]
+	set trans.sel.margin [0 0 0 0 1]
+
+	custom trans.custom.bg
+	set trans.custom.bg [0 0 w h]
+	set trans.custom.bg.color [0 0 0 0 $PANEL$ 255]
+
+endmacro
+
+drawTrans 1 0
+Layout "A"
+	drawTrans 1 0
+endLayout
+Layout "200%_A" "200"
+	drawTrans 2 10
+endLayout
+
+#<
+
+layout_dpi_translate 'A' 1.74 '200%_A'
