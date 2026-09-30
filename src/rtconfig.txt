@@ -96,17 +96,21 @@ macro drawTcp S F
 
 	; level block on row 1: fader right edge fixed at w-226, left edge at w-346
 	; unless the name needs room (then it shrinks)
-	; row 1 reads left to right: name | sends | -2.1 dB | meter+fader | pan
-	set sendX1 - volX1{0} * S 226
+	; row 1 reads left to right: name ...... | sends | -2.1 dB | meter+fader | pan
+	; sends: exactly one slot per send (max 2), right-aligned against the dB value
+	set nSends send_cnt>2 2 send_cnt
+	set slotW * S 100
+	set slotH * S 20
+	set sendW * slotW{0} nSends{0}
+	set sendX1 - - volX1{0} * S 54 sendW{0}
 	; level block on its own row: sends, then a wide fader, dB and pan at the right
-	set sendW * S 172
 	set hasSends !send_cnt 0 1
 	set volX2 - w * S 156
 
 	set volX levelRow{0}==2 volX2{0} volX1{0}
 	set volW * S 120
 	set showVol levelRow{0}==0 0 1
-	set sendX levelRow{0}==2 - volX{0} * S 226 sendX1{0}
+	set sendX - - volX{0} * S 54 sendW{0}
 	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 sendX{0}<nameX{0} 0 1 sendX{0}<minNameR{0} 0 1
 
 	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} - volX{0} * S 46 - w * S 182 - w * S 182
@@ -139,8 +143,8 @@ macro drawTcp S F
 
 	; sends: compact name + level slots, only when the track has sends
 	set tcp.sendlist !showSends{0} [0] + [sendX{0} levelY{0} sendW{0}] * Sv [0 0 0 20]
-	set tcp.sendlist.font + + [1] [F] * Sv [0 20 84 172]
-	set tcp.sendlist.margin * Sv [2 0 2 0 0 0 0 0]
+	set tcp.sendlist.font + + [1] [F] [0 slotH{0} slotW{0} slotW{0}]
+	set tcp.sendlist.margin * Sv [7 0 5 0 0 0 0 0]
 
 	set tcp.io ?tiny{0} [0] + [w row1Y{0}] * Sv [-150 0 24 20]
 	set tcp.env ?tiny{0} [0] + [w row1Y{0}] * Sv [-122 0 20 20]

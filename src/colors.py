@@ -219,7 +219,7 @@ def theme_colors():
     s("mcp_fxparm_bypassed", P.FX_BYPASS)
     s("mcp_fxparm_offlined", P.REC)
     s("tcp_list_scrollbar", P.TEXT_3)
-    s("tcp_list_scrollbar_mode", blend(0.5))
+    s("tcp_list_scrollbar_mode", blend(0.0))
     s("tcp_list_scrollbar_mouseover", P.TEXT_2)
     s("tcp_list_scrollbar_mouseover_mode", blend(0.8))
     s("mcp_list_scrollbar", P.TEXT_3)
@@ -387,18 +387,20 @@ def logfont(size_px, weight=500, face="Inter"):
 
 # Font slots referenced from rtconfig.txt. REAPER has 15 theme font slots, so
 # each UI scale step gets two: small (values, sends, inputs) and name (track
-# names). Step k uses slots 1+2k and 2+2k. Inter ships with REAPER 7.
+# names). An element's `.font N` uses user_font(N-1), so step k's small and
+# name fonts (indices 1+2k, 2+2k in rtconfig) live in user_font 2k and 2k+1.
+# Inter ships with REAPER 7.
 FONT_SMALL, FONT_NAME = 11, 13
 
 
 def fonts(scales):
     out = {"lb_font": logfont(12, 500), "lb_font2": logfont(11, 500),
            "tl_font": logfont(11, 500), "mi_font": logfont(11, 500),
-           "trans_font": logfont(22, 500), "user_font0": logfont(13, 500)}
+           "trans_font": logfont(22, 500)}
     for k, pct in enumerate(scales):
         f = pct / 100
-        out["user_font%d" % (1 + 2 * k)] = logfont(round(FONT_SMALL * f), 500)
-        out["user_font%d" % (2 + 2 * k)] = logfont(round(FONT_NAME * f), 500)
+        out["user_font%d" % (2 * k)] = logfont(round(FONT_SMALL * f), 500)
+        out["user_font%d" % (2 * k + 1)] = logfont(round(FONT_NAME * f), 500)
     return out
 
 

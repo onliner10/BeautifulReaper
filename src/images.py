@@ -441,7 +441,20 @@ image("tcp_vol_knob_stack")(lambda s: knob_stack(s, 20, False, ring=P.TEXT_2))
 image("mcp_pan_knob_stack")(lambda s: knob_stack(s, 26, True, ring=P.TEXT_2))
 image("mcp_wid_knob_stack")(lambda s: knob_stack(s, 26, False, ring=P.TEXT_2))
 image("mcp_vol_knob_stack")(lambda s: knob_stack(s, 26, False, ring=P.TEXT_2))
-image("tcp_send_knob_stack")(lambda s: knob_stack(s, 16, True, ring=P.TEXT_2, face_col=P.CONTROL))
+# No send knob: like Ableton, the send is a value box (name + level fill).
+# REAPER sizes the knob area from this image, so a tiny empty stack frees
+# the space for the name.
+for _n in ("tcp_send_knob_stack", "tcp_send_knob_stack2"):
+    image(_n)(lambda s: Image.new("RGBA", (px(4, s), px(4, s) * 2), (0, 0, 0, 0)))
+# tcp_sendlist_meter2 is the send's field; REAPER paints the level over it.
+def send_field(s, w=26, h=20):
+    cv = Canvas(w, h, s)
+    cv.rrect(1, 2, w - 2, h - 4, 4, fill=c(P.CONTROL))
+    return pink_border(cv.result(), px(6, s), px(5, s), px(6, s), px(5, s))
+
+
+image("tcp_sendlist_meter")(send_field)
+image("tcp_sendlist_meter2")(send_field)
 image("mcp_send_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.ACCENT))
 image("mcp_fxparm_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.FX_ON))
 image("tcp_fxparm_knob_stack")(lambda s: knob_stack(s, 18, False, ring=P.FX_ON))
@@ -734,27 +747,25 @@ image("tcp_fxlist_empty")(list_slot(P.SLOT_EMPTY))
 image("mcp_sendlist_norm")(list_slot(P.mix(P.ACCENT, P.PANEL, 0.82)))
 image("mcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
 image("mcp_sendlist_empty")(list_slot(P.SLOT_EMPTY))
-def send_slot(field, w=56, h=20, knob_w=22):
-    """Track-panel send slot. Frame 0 is the field; REAPER paints the send
-    level over it, tinted with the destination track's color. Frames 1-2
-    are hover / pressed.
-    The right `knob_w` points hold the send knob and never stretch."""
+def send_slot(field, w=56, h=20):
+    """Track-panel send: a pill shaped like the other track buttons. Frame 0
+    is the field; REAPER paints the send level over it in the destination
+    track's color. Frames 1-2 are hover / pressed."""
     def f(s):
         ims = []
         for st in STATES:
             cv = Canvas(w, h, s)
-            base = face(st, field)
-            # flat and nearly square: REAPER paints the level (in the destination
-            # track's color) as a square-cornered fill over this field
-            cv.rrect(0, 2, w, h - 4, 2, fill=c(base))
+            cv.rrect(1, 2, w - 2, h - 4, 4, fill=c(face(st, field)))
             ims.append(cv.result())
-        return pink_border(vstack(ims), px(6, s), px(4, s), px(knob_w, s), px(4, s))
+        return pink_border(vstack(ims), px(6, s), px(4, s), px(6, s), px(4, s))
     return f
 
 
-image("tcp_sendlist_norm")(send_slot(P.SEND_FIELD))
-image("tcp_sendlist_mute")(send_slot(P.mix(P.SEND_FIELD, P.PANEL, 0.6)))
-image("tcp_sendlist_empty")(lambda s: pink_border(Image.new("RGBA", (px(56, s), px(60, s)), (0, 0, 0, 0)), px(6, s), px(4, s), px(22, s), px(4, s)))
+image("tcp_sendlist_norm")(send_slot(P.CONTROL))
+image("tcp_sendlist_mute")(send_slot(P.mix(P.CONTROL, P.PANEL, 0.6)))
+image("tcp_sendlist_norm2")(send_slot(P.CONTROL))
+image("tcp_sendlist_mute2")(send_slot(P.mix(P.CONTROL, P.PANEL, 0.6)))
+image("tcp_sendlist_empty")(lambda s: pink_border(Image.new("RGBA", (px(56, s), px(60, s)), (0, 0, 0, 0)), px(6, s), px(4, s), px(4, s), px(4, s)))
 
 
 @image("mcp_fxlist_bg")
