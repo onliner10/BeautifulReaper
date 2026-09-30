@@ -203,7 +203,7 @@ def main():
 """
     tracks = [
         track("Drums", C["drums"], "1 1", fx=["utility/volume", "utility/volume"], sel=0),
-        track("Kick", C["drums"], items=loop("kick.wav", "Kick"), fx=["utility/volume"]),
+        track("Kick", C["drums"], items=loop("kick.wav", "Kick"), fx=["utility/volume"], vol=2.4),
         track("Snare", C["drums"], items=loop("snare.wav", "Snare", 0, 4), vol=0.8),
         track("Tops", C["drums"], "1 1"),
         track("Hats", C["drums"], items=loop("hats.wav", "Hats", L, 3), vol=0.6, pan=0.25),

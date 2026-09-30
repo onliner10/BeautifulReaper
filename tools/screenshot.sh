@@ -28,6 +28,9 @@ splash=0
 verchk=0
 newprojtmpl=
 errnowarn=5
+linux_audio_mode=2
+linux_audio_srate=44100
+linux_audio_bsize=512
 INI
 [ -n "$EXTRA" ] && cat "$EXTRA" >> "$CFG/reaper.ini"
 DISP=:$((RANDOM % 400 + 100))
@@ -50,6 +53,11 @@ sleep 0.5
 M=$(xdotool search --onlyvisible --name " - REAPER v" | head -1)
 xdotool windowmove "$M" 0 0 windowsize "$M" "$W" "$H"
 xdotool mousemove $((W - 1)) $((H - 1))
+# PLAY=1: start playback and let meters settle before capturing.
+if [ "${PLAY:-0}" = 1 ]; then
+  xdotool mousemove $((W / 2)) $((H / 2)) click 1
+  sleep 0.3; xdotool key space; sleep "${PLAY_SECS:-3}"
+fi
 [ -n "${PRE_SHOT:-}" ] && eval "$PRE_SHOT"
 sleep 3
 import -window root "$OUT"

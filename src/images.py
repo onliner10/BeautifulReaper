@@ -262,23 +262,14 @@ for _suffix, _col in ENV_MODES.items():
     image("mcp_env" + _suffix)(lambda s, f=_env: f(s))
 
 
-def route_glyph(cv, gcol, st, w=BTN_W):
-    """Routing: two opposing arrows."""
-    cx, cy = w / 2, BTN_H / 2
-    cv.line([(cx - 5, cy - 2.5), (cx + 4.5, cy - 2.5)], gcol, 1.3)
-    cv.line([(cx + 2.2, cy - 4.8), (cx + 4.8, cy - 2.5), (cx + 2.2, cy - 0.2)], gcol, 1.3)
-    cv.line([(cx + 5, cy + 2.5), (cx - 4.5, cy + 2.5)], gcol, 1.3)
-    cv.line([(cx - 2.2, cy + 0.2), (cx - 4.8, cy + 2.5), (cx - 2.2, cy + 4.8)], gcol, 1.3)
-
-
 # track_io[_r][_s][_dis]: _s/_r = has sends/receives (marked with an accent dot),
 # _dis = master/parent send disabled (dimmed glyph).
 for _suffix in ("", "_r", "_s", "_s_r"):
     for _dis in ("", "_dis"):
-        def _io(s, dis=_dis, has=bool(_suffix), w=BTN_W):
+        def _io(s, dis=_dis, has=bool(_suffix), w=24):
             def draw(cv, st):
                 cv.rrect(1, 2, w - 2, BTN_H - 4, 4, fill=c(face(st, P.CONTROL)))
-                route_glyph(cv, c(P.TEXT_3 if dis else (P.TEXT if st == "hover" else P.TEXT_2)), st, w)
+                cv.text(w / 2, BTN_H / 2 + 0.3, "I/O", 8, c(P.TEXT_3 if dis else (P.TEXT if st == "hover" else P.TEXT_2)))
                 if has:
                     cv.circle(w - 3.5, 3.5, 2.2, fill=c(P.ACCENT))
             return frames3(w, BTN_H, s, draw)
@@ -704,7 +695,7 @@ image("mcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
 image("mcp_sendlist_empty")(list_slot(P.SLOT_EMPTY))
 image("tcp_sendlist_norm")(list_slot(P.mix(P.ACCENT, P.PANEL, 0.82)))
 image("tcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
-image("tcp_sendlist_empty")(list_slot(P.SLOT_EMPTY))
+image("tcp_sendlist_empty")(list_slot(P.PANEL))  # invisible on the panel, still clickable
 
 
 @image("mcp_fxlist_bg")
