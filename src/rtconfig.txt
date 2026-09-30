@@ -191,6 +191,8 @@ macro drawTcp S F
 	set tcp.recmon inputRow{0}==0 [0] + [w inputY{0}] * Sv [-28 0 20 20]
 
 	; surfaces - declared last so they draw underneath (first declared is on top)
+	custom tcp.custom.sendTray '' 0 '' 'send_tray'
+	set tcp.custom.sendTray !showSends{0} [0] + [sendX{0} sendY{0} sendW{0}] * Sv [-3 0 3 20]
 	custom tcp.custom.strip
 	set tcp.custom.strip ?super{0} [0] + [panelX{0} 0 0 cardH{0}] * Sv [0 0 3 0]
 	set tcp.custom.strip.color ?trackcolor_valid [0 0 0 0 trackcolor_r trackcolor_g trackcolor_b 255] [0 0 0 0 $CONTROL$ 255]

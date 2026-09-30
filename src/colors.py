@@ -210,7 +210,7 @@ def theme_colors():
     s("vu_gr_fgcol", P.FX_BYPASS)
 
     # --- mixer lists ---
-    s("mcp_sends_normal", P.TEXT)
+    s("mcp_sends_normal", P.SEND_TEXT)
     s("mcp_sends_muted", P.TEXT_3)
     s("mcp_send_midihw", P.AUTO_PREVIEW)
     s("mcp_sends_levels", P.SEND_LEVEL)

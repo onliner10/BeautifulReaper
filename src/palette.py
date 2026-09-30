@@ -20,7 +20,8 @@ CONTROL = "#36383D"      # button face
 CONTROL_HOVER = "#42444A"
 CONTROL_PRESS = "#2C2E32"
 KNOB = "#56585F"         # knob caps
-SEND_FIELD = "#1B1C1F"   # send field (dark well); level fill = destination color @ 55%
+SEND_FIELD = "#8E8F95"   # send field: light value box (dark text); level = destination color @ 55%
+SEND_TEXT = "#232427"    # == PANEL: makes REAPER's send divider invisible
 SEND_EDGE = "#303237"    # send slot outline
 SEND_LEVEL = "#2D5B8C"   # send level fill (calm accent)
 SLOT_EMPTY = "#1F2023"   # empty insert/send slot: present, but quiet

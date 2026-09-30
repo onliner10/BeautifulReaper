@@ -454,10 +454,11 @@ for _n in ("tcp_send_knob_stack", "tcp_send_knob_stack2", "tcp_sendlist_knob", "
 # so the field is an outlined pill whose right edge *is* that divider, and the
 # empty knob square becomes the gap to the next send.
 # REAPER reserves the right quarter of every send slot for a knob and draws a
-# 1px divider (send text color, ~30% opacity) in front of it, at about
-# 0.75 * slot width - 3px. Neither can be removed, so the field stretches
-# proportionally and ends at that divider: the divider becomes the field's
-# end cap and the empty knob area becomes the gap to the next send.
+# 1px divider in front of it (send text color, ~30% opacity) at about
+# 0.75 * slot width - 3px. The field stretches proportionally and ends just
+# before that divider, and the send text color equals the panel color, so the
+# divider vanishes into the panel; the empty knob area is the gap between sends.
+# (Dark text therefore needs a light field: a value box, as in Ableton.)
 SEND_FIELD_W = 80          # image width; stretched to the slot width
 SEND_END = 0.75 * SEND_FIELD_W - 2
 
@@ -465,13 +466,28 @@ SEND_END = 0.75 * SEND_FIELD_W - 2
 def send_field(s, w=SEND_FIELD_W, h=16, muted=False):
     body = P.mix(P.SEND_FIELD, P.PANEL, 0.5) if muted else P.SEND_FIELD
     cv = Canvas(w, h, s)
-    cv.rrect(0, 0, SEND_END + 4, h, 3, fill=c(body))
+    # square corners, like the level fill REAPER paints over it
+    cv.rect(0, 0, SEND_END + 4, h, fill=c(body))
     im = cv.result()
-    for x in range(px(SEND_END, s), im.width):
+    # end one pixel before the divider: the divider is drawn in the send text
+    # color, which equals the panel, so over the panel it disappears
+    for x in range(px(SEND_END, s) - 1, im.width):
         for y in range(im.height):
             im.putpixel((x, y), (0, 0, 0, 0))
     # only the rounded left end is fixed; everything else scales with the slot
     return pink_border(im, px(5, s), px(4, s), 0, px(4, s))
+
+
+# The sends sit in a tray painted in the plain panel color: invisible on a
+# normal track, a subtle well on a selected one. REAPER's send divider (send
+# text color) and its "armed for automation" ring (col_fadearm) are both that
+# same color, so they vanish on either card.
+@image("send_tray")
+def send_tray(s, r=5):
+    n = 2 * r + 4
+    cv = Canvas(n, n, s)
+    cv.rrect(0, 0, n, n, r, fill=c(P.PANEL))
+    return pink_border(cv.result(), px(r + 1, s), px(r + 1, s), px(r + 1, s), px(r + 1, s))
 
 
 image("tcp_sendlist_meter")(send_field)
@@ -790,7 +806,7 @@ def mcp_fxlist_bg(s):
 
 image("mcp_sendlist_bg")(mcp_fxlist_bg)
 image("tcp_fxlist_bg")(mcp_fxlist_bg)
-image("tcp_sendlist_bg")(mcp_fxlist_bg)
+image("tcp_sendlist_bg")(lambda s: Image.new("RGBA", (px(4, s), px(4, s)), (0, 0, 0, 0)))  # sits on selected cards too
 
 
 # ------------------------------------------------------ media item icons ----
