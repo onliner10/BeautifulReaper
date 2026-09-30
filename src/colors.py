@@ -392,7 +392,7 @@ FONT_SIZES = [
     (2, 11, 500),   # small: values, dB readouts
     (3, 12, 500),   # body: fx list, input names
     (4, 13, 500),   # track names
-    (5, 13, 600),   # emphasis: folder names, master
+    (5, 13, 600),   # emphasis: master strip name
 ]
 
 

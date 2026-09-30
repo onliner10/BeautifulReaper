@@ -72,7 +72,7 @@ macro drawTcp S F
 	set nameW - - w nameX{0} * S 124
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
-	set tcp.label.font folderstate==1 + [5] [F] + [4] [F]
+	set tcp.label.font + [4] [F]
 	set tcp.label.color ?track_selected [255 255 255] [$TEXT$]
 
 	set tcp.env ?tiny{0} [0] + [w row1Y{0}] * Sv [-122 0 20 20]
