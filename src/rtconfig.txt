@@ -57,38 +57,61 @@ macro drawTcp S F
 	set panelX + mx{0} indent{0}
 	set gap * S 1
 	set cardH - h gap{0}
-	; content is vertically centred: one row, or two while armed and tall enough
-	set armRowH * S 50
-	set showRow2 ?recarm cardH{0}<armRowH{0} 0 1 0
-	set blockH ?showRow2{0} * S 46 * S 20
-	set row1Y * 0.5 - cardH{0} blockH{0}
-	set row2Y + row1Y{0} * S 26
 	set tinyH * S 18
 	set tiny h<tinyH{0} 1 0
 	set superH * S 10
 	set super h<superH{0} 1 0
 
-	; row 1 (right-anchored columns so faders line up at every tree depth):
-	;   [>] Name ........ [===meter/fader===] -2.1  (pan) [io] [A] [FX] [M] [S] [o]
 	set foldX + panelX{0} * S 8
-	set tcp.foldercomp ?tiny{0} [0] folderstate==1 + [foldX{0} row1Y{0}] * Sv [0 0 20 20] [0]
 	set nameX + foldX{0} * S 21
-
-	; columns, right to left: buttons | pan | dB | fader | sends | name
-	; The fader's right edge is fixed and its left edge sits at w-346 unless the
-	; name needs room, then it shrinks; below 48pt it hides. Sends only appear
-	; when the track has sends and there is room left for a readable name.
-	set volR - w * S 226
-	set volX - w * S 346
 	set minNameR + nameX{0} * S 72
-	set volX volX{0}<minNameR{0} minNameR{0} .
+
+	; ---- responsive rows ------------------------------------------------------
+	; Row 1 always holds: [>] Name ... [I/O] [A] [FX] [M] [S] [o]
+	; The level block (sends, fader/meter, dB, pan) sits on row 1 when the panel
+	; is wide enough, otherwise it wraps to its own row if the track is tall
+	; enough. Armed tracks add an input row; if only two rows fit, recording
+	; wins and the wrapped level row hides.
+	set rowStep * S 26
+	set wideVolW - - w * S 226 minNameR{0}
+	set minVol1 * S 96
+	set wrap ?tiny{0} 0 wideVolW{0}<minVol1{0} 1 0
+	set h2 * S 46
+	set h3 * S 72
+	set can2 cardH{0}<h2{0} 0 1
+	set can3 cardH{0}<h3{0} 0 1
+	set armed ?recarm 1 0
+	set levelRow ?tiny{0} 0 ?wrap{0} ?armed{0} ?can3{0} 2 0 ?can2{0} 2 0 1
+	set inputRow ?armed{0} levelRow{0}==2 3 ?can2{0} 2 0 0
+	set rows inputRow{0}>levelRow{0} inputRow{0} levelRow{0}
+	set rows rows{0}<1 1 .
+	set blockH - * rows{0} rowStep{0} * S 6
+	set row1Y * 0.5 - cardH{0} blockH{0}
+	set levelY + row1Y{0} * - levelRow{0} 1 rowStep{0}
+	set inputY + row1Y{0} * - inputRow{0} 1 rowStep{0}
+
+	; ---- row 1 ------------------------------------------------------------------
+	set tcp.foldercomp ?tiny{0} [0] folderstate==1 + [foldX{0} row1Y{0}] * Sv [0 0 20 20] [0]
+
+	; level block on row 1: fader right edge fixed at w-226, left edge at w-346
+	; unless the name needs room (then it shrinks)
+	set volX1 - w * S 346
+	set volX1 volX1{0}<minNameR{0} minNameR{0} .
+	set sendX1 - volX1{0} * S 158
+	; level block on its own row: sends, then a wide fader, dB and pan at the right
+	set sendW * S 150
+	set hasSends !send_cnt 0 1
+	set volX2 ?hasSends{0} + nameX{0} * S 158 nameX{0}
+
+	set volX levelRow{0}==2 volX2{0} volX1{0}
+	set volR levelRow{0}==2 - w * S 82 - w * S 226
 	set volW - volR{0} volX{0}
 	set minVol * S 48
-	set showVol ?tiny{0} 0 volW{0}<minVol{0} 0 1
-	set sendW * S 150
-	set sendX - - volX{0} * S 8 sendW{0}
-	set showSends ?tiny{0} 0 !send_cnt 0 !showVol{0} 0 sendX{0}<minNameR{0} 0 1
-	set nameR ?showSends{0} sendX{0} ?showVol{0} volX{0} - w * S 182
+	set showVol levelRow{0}==0 0 volW{0}<minVol{0} 0 1
+	set sendX levelRow{0}==2 nameX{0} sendX1{0}
+	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 1 sendX{0}<minNameR{0} 0 1
+
+	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} volX{0} - w * S 182 - w * S 182
 	set nameW - - nameR{0} nameX{0} * S 8
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
@@ -96,41 +119,44 @@ macro drawTcp S F
 	set tcp.label.color ?track_selected [255 255 255] [$TEXT$]
 
 	; level: the meter is the fader's track
-	set tcp.volume !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [0 0 0 20]
+	set tcp.volume !showVol{0} [0] + [volX{0} levelY{0} volW{0}] * Sv [0 0 0 20]
 	set tcp.volume.fadermode [0]
-	set tcp.meter !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [4 8 -8 5]
+	set tcp.meter !showVol{0} [0] + [volX{0} levelY{0} volW{0}] * Sv [4 8 -8 5]
 	set tcp.meter.vu.div [S]
 	set tcp.meter.readout.color [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.lit.bottom [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.lit.top [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.unlit.bottom [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
-	set tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-222 0 42 20]
+	set dbX levelRow{0}==2 * S -76 * S -222
+	set tcp.volume.label !showVol{0} [0] + [w levelY{0}] + [dbX{0}] * Sv [0 0 42 20]
 	set tcp.volume.label.margin [0 0 0 0 1]
 	set tcp.volume.label.font + [2] [F]
 	set tcp.volume.label.color [$TEXT_2$]
-	set tcp.pan ?tiny{0} [0] + [w row1Y{0}] * Sv [-176 0 20 20]
+	set panX levelRow{0}==2 * S -28 * S -176
+	set panY levelRow{0}==2 levelY{0} row1Y{0}
+	set tcp.pan ?tiny{0} [0] + [w panY{0}] + [panX{0}] * Sv [0 0 20 20]
 	set tcp.pan.fadermode [1]
+
+	; sends: compact name + level slots, only when the track has sends
+	set tcp.sendlist !showSends{0} [0] + [sendX{0} levelY{0} sendW{0}] * Sv [0 0 0 20]
+	set tcp.sendlist.font + [2] * Sv [0 20 72 150]
+	set tcp.sendlist.margin * Sv [2 0 2 0 0 0 0 0]
 
 	set tcp.io ?tiny{0} [0] + [w row1Y{0}] * Sv [-150 0 24 20]
 	set tcp.env ?tiny{0} [0] + [w row1Y{0}] * Sv [-122 0 20 20]
-
-	; sends: one compact row of name + level, only when the track has sends
-	set tcp.sendlist !showSends{0} [0] + [sendX{0} row1Y{0} sendW{0}] * Sv [0 0 0 20]
-	set tcp.sendlist.font + [2] * Sv [0 20 72 150]
-	set tcp.sendlist.margin * Sv [2 0 2 0 0 0 0 0]
 	set tcp.fx ?tiny{0} [0] + [w row1Y{0}] * Sv [-99 0 24 20]
 	set tcp.mute ?tiny{0} [0] + [w row1Y{0}] * Sv [-72 0 20 20]
 	set tcp.solo ?tiny{0} [0] + [w row1Y{0}] * Sv [-50 0 20 20]
 	set tcp.recarm ?tiny{0} [0] + [w row1Y{0}] * Sv [-28 0 20 20]
 
-	; row 2 - recording: input selector + monitoring, only while armed
+	; ---- input row (armed only): input selector + monitoring --------------------
 	set inW - w nameX{0}
-	set tcp.recinput !showRow2{0} [0] + [nameX{0} row2Y{0} inW{0}] * Sv [2 0 -58 20]
+	set tcp.recinput inputRow{0}==0 [0] + [nameX{0} inputY{0} inW{0}] * Sv [2 0 -58 20]
 	set tcp.recinput.font + [2] [F]
 	set tcp.recinput.color [$TEXT$]
 	set tcp.recinput.margin * Sv [7 0 16 0]
-	set tcp.recmon !showRow2{0} [0] + [w row2Y{0}] * Sv [-28 0 20 20]
+	set tcp.recmon inputRow{0}==0 [0] + [w inputY{0}] * Sv [-28 0 20 20]
 
 	; surfaces - declared last so they draw underneath (first declared is on top)
 	custom tcp.custom.strip
