@@ -717,7 +717,12 @@ def small_toggle(label, on_col=None, w=36, h=18):
 
 
 image("envcp_arm_off")(lambda s: recarm(s, False))
-image("envcp_arm_on")(lambda s: recarm(s, True))
+def env_arm_on(s):
+    # armed envelopes are common: a red dot on a quiet button, not a red pill
+    return pill_button(s, None, None, glyph_fn=lambda cv, gcol, st: cv.circle(BTN_W / 2, BTN_H / 2, 4.2, fill=c(P.REC)))
+
+
+image("envcp_arm_on")(env_arm_on)
 image("envcp_bypass_off")(small_toggle("ON"))
 image("envcp_bypass_on")(small_toggle("OFF", P.FX_BYPASS))
 image("envcp_learn")(small_toggle("LRN"))

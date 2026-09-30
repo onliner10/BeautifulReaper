@@ -20,7 +20,7 @@ CONTROL = "#36383D"      # button face
 CONTROL_HOVER = "#42444A"
 CONTROL_PRESS = "#2C2E32"
 KNOB = "#56585F"         # knob caps
-SEND_FIELD = "#8E8F95"   # send field: light value box (dark text); level = destination color @ 55%
+SEND_FIELD = "#A2A3A9"   # send field: light value box (dark text); level = destination color @ 55%
 SEND_TEXT = "#232427"    # == PANEL: makes REAPER's send divider invisible
 SEND_EDGE = "#303237"    # send slot outline
 SEND_LEVEL = "#2D5B8C"   # send level fill (calm accent)
@@ -49,6 +49,17 @@ AUTO_TOUCH = "#FF9F0A"
 AUTO_LATCH = "#BF5AF2"
 AUTO_PREVIEW = "#64D2FF"
 
+# Envelopes: muted, clearly distinct hues. They are drawn as lines and (if the
+# user enables "filled automation envelopes") as a fill in the same color, so
+# they must stay calm; they never reuse the automation-mode colors.
+ENV_VOLUME = "#6CC08B"   # sage green
+ENV_PAN = "#6FB3D9"      # soft sky
+ENV_MUTE = "#8E9BB8"     # slate
+ENV_WIDTH = "#B7A3E0"    # lavender
+ENV_SEND = "#D9B77A"     # sand
+ENV_FX = ["#7FA7E0", "#C79BD6", "#6FC8B8", "#D8A47F"]  # FX parameters 1-4
+ENV_TEMPO = "#C9C9CF"    # tempo / playrate
+
 # Meters (bottom -> top).
 METER_OFF = "#22261F"    # unlit segments: a dark, slightly green LED
 METER_LOW = "#3C7F34"    # quiet
@@ -65,6 +76,7 @@ EDIT_CURSOR = "#0A84FF"
 GRID_BAR = "#2C2D31"
 GRID_BEAT = "#222326"
 TIME_SEL = "#0A84FF"
+TIME_SEL_FILL = "#8FA3BF"  # time selection wash in the arrange: neutral, light
 LOOP = "#0A84FF"
 MARKER = "#FF9F0A"
 REGION = "#5E5CE6"
