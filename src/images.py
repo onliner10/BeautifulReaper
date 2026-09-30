@@ -346,6 +346,18 @@ def envcp_faderbg(s):
 
 @image("tcp_volthumb")
 def tcp_volthumb(s):
+    # Fader position marker for a fader whose track is the level meter.
+    # REAPER paints meters above everything, so the marker is a pair of tabs
+    # that stick out above and below the meter: a white wedge on each side.
+    cv = Canvas(10, 20, s)
+    cv.poly([(0.6, 0), (9.4, 0), (5, 4.6)], fill=c("#F4F4F7"))
+    cv.poly([(0.6, 20), (9.4, 20), (5, 15.4)], fill=c("#F4F4F7"))
+    cv.rect(4.25, 3, 1.5, 14, fill=c("#F4F4F7"))
+    return cv.result()
+
+
+@image("envcp_fader")
+def envcp_fader(s):
     cv = Canvas(8, 16, s)
     cv.rrect(0.5, 1, 7, 15, 2.5, fill=c("#000000", 110))
     cv.rrect(0.5, 0.5, 7, 14.5, 2.5, fill=c("#E4E5EA"))
@@ -645,7 +657,6 @@ def envcp_hide(s):
     return frames3(20, 20, s, draw)
 
 
-image("envcp_fader")(tcp_volthumb)
 
 
 # --------------------------------------------------------- misc / lists ------
