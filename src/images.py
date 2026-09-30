@@ -463,9 +463,9 @@ SEND_END = 0.75 * SEND_FIELD_W - 2
 
 
 def send_field(s, w=SEND_FIELD_W, h=16, muted=False):
-    body = P.mix(P.CONTROL, P.PANEL, 0.6) if muted else P.CONTROL
+    body = P.mix(P.SEND_FIELD, P.PANEL, 0.5) if muted else P.SEND_FIELD
     cv = Canvas(w, h, s)
-    cv.rrect(0, 0, SEND_END + 4, h, 4, fill=c(body))
+    cv.rrect(0, 0, SEND_END + 4, h, 3, fill=c(body))
     im = cv.result()
     for x in range(px(SEND_END, s), im.width):
         for y in range(im.height):

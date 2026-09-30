@@ -214,6 +214,8 @@ def theme_colors():
     s("mcp_sends_muted", P.TEXT_3)
     s("mcp_send_midihw", P.AUTO_PREVIEW)
     s("mcp_sends_levels", P.SEND_LEVEL)
+    # level fill: REAPER paints it in the destination track's color with this blend
+    s("send_meter_tint_mode", blend(0.55))
     s("mcp_fx_normal", P.TEXT)
     s("mcp_fx_bypassed", P.FX_BYPASS)
     s("mcp_fx_offlined", P.REC)
