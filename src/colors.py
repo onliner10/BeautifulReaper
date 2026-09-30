@@ -63,9 +63,11 @@ def theme_colors():
     s("col_mixerbg", P.BG_DEEP)
     s("col_arrangebg", P.BG_DEEP)
     s("arrange_vgrid", P.BG_LANE)
-    s("col_fadearm", P.REC)
-    s("col_fadearm2", P.REC)
-    s("col_fadearm3", P.REC)
+    # "armed for automation" rings/lines on faders and knobs: the envelope's
+    # own arm button already says it, so keep these quiet
+    s("col_fadearm", P.PANEL)
+    s("col_fadearm2", P.PANEL)
+    s("col_fadearm3", P.PANEL)
 
     # --- timeline / ruler ---
     s("col_tl_fg", P.TEXT_2)

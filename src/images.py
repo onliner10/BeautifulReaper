@@ -444,13 +444,34 @@ image("mcp_vol_knob_stack")(lambda s: knob_stack(s, 26, False, ring=P.TEXT_2))
 # No send knob: like Ableton, the send is a value box (name + level fill).
 # REAPER sizes the knob area from this image, so a tiny empty stack frees
 # the space for the name.
-for _n in ("tcp_send_knob_stack", "tcp_send_knob_stack2"):
+for _n in ("tcp_send_knob_stack", "tcp_send_knob_stack2", "tcp_sendlist_knob", "tcp_sendlist_knob2",
+           "tcp_sendlist_knob_bg", "tcp_sendlist_knob_bg2", "tcp_master_sendlist_knob", "tcp_master_sendlist_knob2"):
     image(_n)(lambda s: Image.new("RGBA", (px(4, s), px(4, s) * 2), (0, 0, 0, 0)))
-# tcp_sendlist_meter2 is the send's field; REAPER paints the level over it.
-def send_field(s, w=26, h=20):
+# tcp_sendlist_meter2 is the send's field; REAPER paints the level over it in
+# the destination track's color. REAPER always reserves a knob square
+# (row-height wide) at the right end of each send and draws a 1px divider in
+# the send text color (~30% opacity) in front of it. We cannot remove either,
+# so the field is an outlined pill whose right edge *is* that divider, and the
+# empty knob square becomes the gap to the next send.
+# REAPER reserves the right quarter of every send slot for a knob and draws a
+# 1px divider (send text color, ~30% opacity) in front of it, at about
+# 0.75 * slot width - 3px. Neither can be removed, so the field stretches
+# proportionally and ends at that divider: the divider becomes the field's
+# end cap and the empty knob area becomes the gap to the next send.
+SEND_FIELD_W = 80          # image width; stretched to the slot width
+SEND_END = 0.75 * SEND_FIELD_W - 2
+
+
+def send_field(s, w=SEND_FIELD_W, h=16, muted=False):
+    body = P.mix(P.CONTROL, P.PANEL, 0.6) if muted else P.CONTROL
     cv = Canvas(w, h, s)
-    cv.rrect(1, 2, w - 2, h - 4, 4, fill=c(P.CONTROL))
-    return pink_border(cv.result(), px(6, s), px(5, s), px(6, s), px(5, s))
+    cv.rrect(0, 0, SEND_END + 4, h, 4, fill=c(body))
+    im = cv.result()
+    for x in range(px(SEND_END, s), im.width):
+        for y in range(im.height):
+            im.putpixel((x, y), (0, 0, 0, 0))
+    # only the rounded left end is fixed; everything else scales with the slot
+    return pink_border(im, px(5, s), px(4, s), 0, px(4, s))
 
 
 image("tcp_sendlist_meter")(send_field)
@@ -747,17 +768,11 @@ image("tcp_fxlist_empty")(list_slot(P.SLOT_EMPTY))
 image("mcp_sendlist_norm")(list_slot(P.mix(P.ACCENT, P.PANEL, 0.82)))
 image("mcp_sendlist_mute")(list_slot(P.PANEL_RAISED))
 image("mcp_sendlist_empty")(list_slot(P.SLOT_EMPTY))
-def send_slot(field, w=56, h=20):
-    """Track-panel send: a pill shaped like the other track buttons. Frame 0
-    is the field; REAPER paints the send level over it in the destination
-    track's color. Frames 1-2 are hover / pressed."""
+def send_slot(field=None, w=64, h=20):
+    """Send slot background: transparent - the pill is drawn by send_field."""
     def f(s):
-        ims = []
-        for st in STATES:
-            cv = Canvas(w, h, s)
-            cv.rrect(1, 2, w - 2, h - 4, 4, fill=c(face(st, field)))
-            ims.append(cv.result())
-        return pink_border(vstack(ims), px(6, s), px(4, s), px(6, s), px(4, s))
+        return pink_border(Image.new("RGBA", (px(w, s), px(h, s) * 3), (0, 0, 0, 0)),
+                           px(6, s), px(5, s), 0, px(5, s))
     return f
 
 

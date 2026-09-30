@@ -217,6 +217,11 @@ def main():
               fx=["utility/volume", "utility/volume", "utility/volume"], solo=0, bypass_last=True, env=pan_env, automode=2),
         track("Reverb", C["fx"], fx=["utility/volume"], vol=0.7,
               recv="  AUXRECV 11 0 0.5 0 0 0 0 0 0 -1:U 0 -1 ''\n  AUXRECV 6 0 0.3 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
+        track("Delay", C["fx"], fx=["utility/volume"], vol=0.6,
+              recv="  AUXRECV 11 0 0.25 0 0 0 0 0 0 -1:U 0 -1 ''\n  AUXRECV 6 0 0.7 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
+        track("Room", C["fx"], recv="  AUXRECV 6 0 0.4 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
+        track("Crush", C["fx"], recv="  AUXRECV 6 0 0.15 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
+        track("Chorus", C["fx"], recv="  AUXRECV 6 0 0.9 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
     ]
     rpp = f"""<REAPER_PROJECT 0.1 "7.0" 1700000000
   TEMPO {BPM} 4 4

@@ -67,53 +67,82 @@ macro drawTcp S F
 
 	; ---- responsive rows ------------------------------------------------------
 	; Row 1 always holds: [>] Name ... [I/O] [A] [FX] [M] [S] [o]
-	; The level block (sends, fader/meter, dB, pan) sits on row 1 when the panel
-	; is wide enough, otherwise it wraps to its own row if the track is tall
-	; enough. Armed tracks add an input row; if only two rows fit, recording
-	; wins and the wrapped level row hides.
+	; Everything else goes on row 1 when it fits, otherwise onto its own row if
+	; the track is tall enough:
+	;   level block  - sends, dB, meter/fader, pan (wraps when the panel is narrow)
+	;   sends        - get their own full-width row when there are too many to fit
+	;   input        - armed tracks: input selector + monitoring
+	; When rows are scarce the priority is input > level > sends.
 	set rowStep * S 26
 	; the level block has one fixed size everywhere (fader 120pt, meter 110pt) so the
-	; LED segments are drawn pixel-exact; if it does not fit on row 1 it wraps
+	; LED segments are drawn pixel-exact
 	set volX1 - w * S 302
+	set volX2 - w * S 156
 	set minVolX1 + minNameR{0} * S 46
 	set wrap ?tiny{0} 0 volX1{0}<minVolX1{0} 1 0
 	set h2 * S 46
 	set h3 * S 72
-	set can2 cardH{0}<h2{0} 0 1
-	set can3 cardH{0}<h3{0} 0 1
+	set h4 * S 98
+	set maxRows cardH{0}<h2{0} 1 cardH{0}<h3{0} 2 cardH{0}<h4{0} 3 4
 	set armed ?recarm 1 0
-	set levelRow ?tiny{0} 0 ?wrap{0} ?armed{0} ?can3{0} 2 0 ?can2{0} 2 0 1
-	set inputRow ?armed{0} levelRow{0}==2 3 ?can2{0} 2 0 0
-	set rows inputRow{0}>levelRow{0} inputRow{0} levelRow{0}
-	set rows rows{0}<1 1 .
+
+	; sends: one slot per send, 100pt each, narrowing to 56pt before giving up a row
+	set hasSends !send_cnt 0 1
+	set nSends send_cnt>8 8 send_cnt
+	set minSlot * S 56
+	set maxSlot * S 100
+	set needS * minSlot{0} nSends{0}
+	set inlineR ?wrap{0} - volX2{0} * S 54 - volX1{0} * S 54
+	set inlineL ?wrap{0} nameX{0} + nameX{0} * S 118
+	set inlineRoom - inlineR{0} inlineL{0}
+	set sendsFit needS{0}>inlineRoom{0} 0 1
+
+	; hand out the extra rows by priority
+	set extra - maxRows{0} 1
+	set showInput ?armed{0} extra{0}<1 0 1 0
+	set extra ?showInput{0} - extra{0} 1 .
+	set levelOwn ?wrap{0} extra{0}<1 0 1 0
+	set extra ?levelOwn{0} - extra{0} 1 .
+	set sendsOwn ?tiny{0} 0 !hasSends{0} 0 ?sendsFit{0} 0 extra{0}<1 0 1
+
+	; ...and place them top to bottom: name, level, sends, input
+	set levelRow ?tiny{0} 0 ?wrap{0} ?levelOwn{0} 2 0 1
+	set sendsRow ?sendsOwn{0} + 2 levelOwn{0} 0
+	set inputRow ?showInput{0} + + 2 levelOwn{0} sendsOwn{0} 0
+	set rows + + + 1 levelOwn{0} sendsOwn{0} showInput{0}
 	set blockH - * rows{0} rowStep{0} * S 6
 	set row1Y * 0.5 - cardH{0} blockH{0}
 	set levelY + row1Y{0} * - levelRow{0} 1 rowStep{0}
+	set sendsY + row1Y{0} * - sendsRow{0} 1 rowStep{0}
 	set inputY + row1Y{0} * - inputRow{0} 1 rowStep{0}
 
 	; ---- row 1 ------------------------------------------------------------------
 	set tcp.foldercomp ?tiny{0} [0] folderstate==1 + [foldX{0} row1Y{0}] * Sv [0 0 20 20] [0]
 
-	; level block on row 1: fader right edge fixed at w-226, left edge at w-346
-	; unless the name needs room (then it shrinks)
-	; row 1 reads left to right: name ...... | sends | -2.1 dB | meter+fader | pan
-	; sends: exactly one slot per send (max 2), right-aligned against the dB value
-	set nSends send_cnt>2 2 send_cnt
-	set slotW * S 100
-	set slotH * S 20
-	set sendW * slotW{0} nSends{0}
-	set sendX1 - - volX1{0} * S 54 sendW{0}
-	; level block on its own row: sends, then a wide fader, dB and pan at the right
-	set hasSends !send_cnt 0 1
-	set volX2 - w * S 156
-
 	set volX levelRow{0}==2 volX2{0} volX1{0}
 	set volW * S 120
 	set showVol levelRow{0}==0 0 1
-	set sendX - - volX{0} * S 54 sendW{0}
-	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 sendX{0}<nameX{0} 0 1 sendX{0}<minNameR{0} 0 1
 
-	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} - volX{0} * S 46 - w * S 182 - w * S 182
+	; sends geometry: own row = from the name's x to the right edge; inline = the
+	; room between the name (min 72pt) and the dB value, right-aligned to the dB
+	set sendR ?sendsOwn{0} - w * S 8 inlineR{0}
+	set sendL ?sendsOwn{0} nameX{0} inlineL{0}
+	set sendRoom - sendR{0} sendL{0}
+	set wantW * maxSlot{0} nSends{0}
+	set sendW wantW{0}>sendRoom{0} sendRoom{0} wantW{0}
+	set slotW / sendW{0} nSends{0}
+	set slotW slotW{0}<minSlot{0} minSlot{0} .
+	set slotH * S 20
+	; a hair of slack so REAPER's column maths never drops the last send
+	set sendW + sendW{0} * S 2
+	set sendX - sendR{0} sendW{0}
+	set sendY ?sendsOwn{0} sendsY{0} levelY{0}
+	; inline only when every send fits; otherwise own row, otherwise hidden (the
+	; accent dot on I/O still says the track has sends)
+	set showSends !hasSends{0} 0 ?sendsOwn{0} 1 !showVol{0} 0 ?sendsFit{0} 1 0
+	set sendsInline ?showSends{0} ?sendsOwn{0} 0 levelRow{0}==1 1 0 0
+
+	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?sendsInline{0} - sendX{0} * S 8 - volX{0} * S 46 - w * S 182
 	set nameW - - nameR{0} nameX{0} * S 8
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
@@ -142,7 +171,7 @@ macro drawTcp S F
 	set tcp.pan.fadermode [1]
 
 	; sends: compact name + level slots, only when the track has sends
-	set tcp.sendlist !showSends{0} [0] + [sendX{0} levelY{0} sendW{0}] * Sv [0 0 0 20]
+	set tcp.sendlist !showSends{0} [0] + [sendX{0} sendY{0} sendW{0}] * Sv [0 0 0 20]
 	set tcp.sendlist.font + + [1] [F] [0 slotH{0} slotW{0} slotW{0}]
 	set tcp.sendlist.margin * Sv [7 0 5 0 0 0 0 0]
 
