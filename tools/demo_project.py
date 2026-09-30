@@ -195,7 +195,9 @@ def main():
         track("Drums", C["drums"], "1 1", fx=["utility/volume", "utility/volume"], sel=0),
         track("Kick", C["drums"], items=loop("kick.wav", "Kick"), fx=["utility/volume"]),
         track("Snare", C["drums"], items=loop("snare.wav", "Snare", 0, 4), vol=0.8),
-        track("Hats", C["drums"], "2 -1", items=loop("hats.wav", "Hats", L, 3), vol=0.6, pan=0.25),
+        track("Tops", C["drums"], "1 1"),
+        track("Hats", C["drums"], items=loop("hats.wav", "Hats", L, 3), vol=0.6, pan=0.25),
+        track("Shaker", C["drums"], "2 -2", items=loop("hats.wav", "Shaker", 2 * L, 2), vol=0.5, pan=-0.2),
         track("Bass", C["bass"], items=loop("bass.wav", "Bass", 0, 4), fx=["utility/volume", "utility/volume"], sel=1, env=vol_env),
         track("Synths", C["keys"], "1 1", fcomp=2),
         track("Lead", C["keys"], items=loop("pad.wav", "Lead", L, 2)),
@@ -204,7 +206,7 @@ def main():
         track("Lead Vocal", C["vox"], items=loop("vox.wav", "Vox take 3", L, 2), rec="1 0 1 0 0 0 0", height=56,
               fx=["utility/volume", "utility/volume", "utility/volume"], solo=0, bypass_last=True),
         track("Reverb", C["fx"], fx=["utility/volume"], vol=0.7,
-              recv="  AUXRECV 9 0 0.5 0 0 0 0 0 0 -1:U 0 -1 ''\n  AUXRECV 4 0 0.3 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
+              recv="  AUXRECV 11 0 0.5 0 0 0 0 0 0 -1:U 0 -1 ''\n  AUXRECV 6 0 0.3 0 0 0 0 0 0 -1:U 0 -1 ''\n"),
     ]
     rpp = f"""<REAPER_PROJECT 0.1 "7.0" 1700000000
   TEMPO {BPM} 4 4

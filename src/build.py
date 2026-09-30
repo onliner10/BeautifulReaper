@@ -30,6 +30,7 @@ DIST = os.path.join(ROOT, "dist")
 TOKENS = {
     "PANEL": P.PANEL,
     "BG_DEEP": P.BG_DEEP,
+    "GUIDE": P.mix(P.BG_DEEP, P.TEXT_3, 0.4),
     "PANEL_SEL": P.PANEL_SEL,
     "PANEL_RAISED": P.PANEL_RAISED,
     "CONTROL": P.CONTROL,
