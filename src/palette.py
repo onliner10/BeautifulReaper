@@ -46,11 +46,13 @@ AUTO_LATCH = "#BF5AF2"
 AUTO_PREVIEW = "#64D2FF"
 
 # Meters (bottom -> top).
-METER_OFF = "#303237"    # unlit meter segments (doubles as the fader track)
-METER_LOW = "#30D158"
-METER_MID = "#FFD60A"
-METER_HIGH = "#FF9F0A"
-METER_CLIP = "#FF453A"
+METER_OFF = "#22261F"    # unlit segments: a dark, slightly green LED
+METER_LOW = "#3C7F34"    # quiet
+METER_BODY = "#55A443"   # healthy level
+METER_MID = "#D6B23A"    # hot: amber, just below 0 dB
+METER_HIGH = "#E8892F"
+METER_CLIP = "#E5483C"
+METER_GAP = "#121412"    # the dark lines between LED segments
 
 # Arrange view.
 ITEM_WAVE = "#17181A"     # waveforms: dark ink on the track-colored region

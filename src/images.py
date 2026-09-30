@@ -459,8 +459,8 @@ image("meter_bg_mcp")(solid(P.WELL))
 def meter_strip(vertical, rms=False):
     """REAPER meter strip: 4 segments (low, mid, high, clip), each 4px of
     unlit color followed by 4px of lit color."""
-    unlit = [P.METER_OFF, P.METER_OFF, P.mix(P.METER_HIGH, P.METER_OFF, 0.85), P.mix(P.METER_CLIP, P.METER_OFF, 0.8)]
-    lit = [P.METER_LOW, P.METER_LOW, P.METER_MID, P.METER_CLIP]
+    unlit = [P.METER_OFF, P.METER_OFF, P.METER_OFF, P.mix(P.METER_CLIP, P.METER_OFF, 0.75)]
+    lit = [P.METER_LOW, P.METER_BODY, P.METER_MID, P.METER_CLIP]
     if rms:
         lit = [P.mix(x, "#000000", 0.35) for x in lit]
     seq = []
@@ -489,12 +489,38 @@ image("meter_strip_v_rms")(meter_strip(True, True))
 image("meter_strip_h_rms")(meter_strip(False, True))
 
 
-def meter_clip(vertical):
+def meter_overlay(vertical, length=240, thick=12, pitch=3):
+    """Drawn over the meter: thin dark gaps every `pitch` px turn the bar into
+    LED segments."""
     def f(s):
-        im = Image.new("RGBA", (4, 8) if vertical else (8, 4))
-        for i in range(8):
-            col_ = c(P.METER_OFF if i < 4 else P.METER_CLIP)
-            for j in range(4):
+        n, t, p = length * s, thick * s, pitch * s
+        im = Image.new("RGBA", (t, n) if vertical else (n, t), (0, 0, 0, 0))
+        gap = c(P.METER_GAP)
+        for i in range(p - s, n, p):
+            for j in range(t):
+                for k in range(s):
+                    xy = (j, i + k) if vertical else (i + k, j)
+                    if 0 <= xy[0] < im.width and 0 <= xy[1] < im.height:
+                        im.putpixel(xy, gap)
+        return im
+    return f
+
+
+# Exactly the track meter's size (110x12pt), so REAPER never rescales the
+# segment pattern. The mixer's meters vary in height, so they stay unsegmented.
+image("meter_ol_tcp")(meter_overlay(False, 110, 12))
+image("meter_ol_h")(meter_overlay(False, 110, 12))
+
+
+def meter_clip(vertical, size=14):
+    """Clip indicator: [unlit, lit] halves. Lit is a loud red block that
+    latches until clicked."""
+    def f(s):
+        n = size * s
+        im = Image.new("RGBA", (4 * s, 2 * n) if vertical else (2 * n, 4 * s))
+        for i in range(2 * n):
+            col_ = c(P.mix(P.METER_CLIP, P.METER_OFF, 0.82) if i < n else "#FF3B30")
+            for j in range(4 * s):
                 im.putpixel((j, i) if vertical else (i, j), col_)
         return im
     return f

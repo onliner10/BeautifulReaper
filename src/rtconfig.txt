@@ -73,9 +73,11 @@ macro drawTcp S F
 	; enough. Armed tracks add an input row; if only two rows fit, recording
 	; wins and the wrapped level row hides.
 	set rowStep * S 26
-	set wideVolW - - w * S 226 minNameR{0}
-	set minVol1 * S 96
-	set wrap ?tiny{0} 0 wideVolW{0}<minVol1{0} 1 0
+	; the level block has one fixed size everywhere (fader 120pt, meter 110pt) so the
+	; LED segments are drawn pixel-exact; if it does not fit on row 1 it wraps
+	set volX1 - w * S 302
+	set minVolX1 + minNameR{0} * S 46
+	set wrap ?tiny{0} 0 volX1{0}<minVolX1{0} 1 0
 	set h2 * S 46
 	set h3 * S 72
 	set can2 cardH{0}<h2{0} 0 1
@@ -95,23 +97,20 @@ macro drawTcp S F
 
 	; level block on row 1: fader right edge fixed at w-226, left edge at w-346
 	; unless the name needs room (then it shrinks)
-	set volX1 - w * S 346
-	set volX1 volX1{0}<minNameR{0} minNameR{0} .
-	set sendX1 - volX1{0} * S 158
+	; row 1 reads left to right: name | sends | -2.1 dB | meter+fader | pan
+	set sendX1 - volX1{0} * S 204
 	; level block on its own row: sends, then a wide fader, dB and pan at the right
 	set sendW * S 150
 	set hasSends !send_cnt 0 1
-	set volX2 ?hasSends{0} + nameX{0} * S 158 nameX{0}
+	set volX2 - w * S 156
 
 	set volX levelRow{0}==2 volX2{0} volX1{0}
-	set volR levelRow{0}==2 - w * S 82 - w * S 226
-	set volW - volR{0} volX{0}
-	set minVol * S 48
-	set showVol levelRow{0}==0 0 volW{0}<minVol{0} 0 1
-	set sendX levelRow{0}==2 nameX{0} sendX1{0}
-	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 1 sendX{0}<minNameR{0} 0 1
+	set volW * S 120
+	set showVol levelRow{0}==0 0 1
+	set sendX levelRow{0}==2 - volX{0} * S 204 sendX1{0}
+	set showSends !hasSends{0} 0 !showVol{0} 0 levelRow{0}==2 sendX{0}<nameX{0} 0 1 sendX{0}<minNameR{0} 0 1
 
-	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} volX{0} - w * S 182 - w * S 182
+	set nameR levelRow{0}==2 - w * S 156 levelRow{0}==1 ?showSends{0} sendX{0} ?showVol{0} - volX{0} * S 46 - w * S 182 - w * S 182
 	set nameW - - nameR{0} nameX{0} * S 8
 	set tcp.label ?super{0} [0] ?tiny{0} + [nameX{0} 0 nameW{0} cardH{0}] * Sv [0 0 0 0] + [nameX{0} row1Y{0} nameW{0}] * Sv [0 0 0 20]
 	set tcp.label.margin * Sv [3 0 4 0]
@@ -122,15 +121,15 @@ macro drawTcp S F
 	set tcp.volume !showVol{0} [0] + [volX{0} levelY{0} volW{0}] * Sv [0 0 0 20]
 	set tcp.volume.fadermode [0]
 	; meter: 12pt tall, two 5pt channels; the fader is a marker whose tabs show above and below it
-	set tcp.meter !showVol{0} [0] + [volX{0} levelY{0} volW{0}] * Sv [5 4 -10 12]
+	set tcp.meter !showVol{0} [0] + [volX{0} levelY{0}] * Sv [5 4 110 12]
 	set tcp.meter.vu.div * Sv [2]
 	set tcp.meter.readout.color [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.lit.bottom [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.lit.top [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.unlit.bottom [0 0 0 0 0 0 0 0]
 	set tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
-	set dbX levelRow{0}==2 * S -76 * S -222
-	set tcp.volume.label !showVol{0} [0] + [w levelY{0}] + [dbX{0}] * Sv [0 0 42 20]
+	set dbX - volX{0} * S 46
+	set tcp.volume.label !showVol{0} [0] + [dbX{0} levelY{0}] * Sv [0 0 42 20]
 	set tcp.volume.label.margin [0 0 0 0 1]
 	set tcp.volume.label.font + [2] [F]
 	set tcp.volume.label.color [$TEXT_2$]
@@ -214,12 +213,12 @@ macro drawMasterTcp S F
 	set master.tcp.label.color [$TEXT$]
 
 	set volW * S 120
-	set volX - w * S 346
+	set volX - w * S 302
 	set minVolX * S 160
 	set showVol volX{0}<minVolX{0} 0 1
 	set master.tcp.volume !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [0 0 0 20]
 	set master.tcp.volume.fadermode [0]
-	set master.tcp.meter !showVol{0} [0] + [volX{0} row1Y{0} volW{0}] * Sv [5 4 -10 12]
+	set master.tcp.meter !showVol{0} [0] + [volX{0} row1Y{0}] * Sv [5 4 110 12]
 	set master.tcp.meter.vu.div * Sv [2]
 	set master.tcp.meter.readout.color [0 0 0 0 0 0 0 0]
 	set master.tcp.meter.rmsreadout.color [0 0 0 0 0 0 0 0]
@@ -227,7 +226,7 @@ macro drawMasterTcp S F
 	set master.tcp.meter.scale.color.lit.top [0 0 0 0 0 0 0 0]
 	set master.tcp.meter.scale.color.unlit.bottom [0 0 0 0 0 0 0 0]
 	set master.tcp.meter.scale.color.unlit.top [0 0 0 0 0 0 0 0]
-	set master.tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-222 0 42 20]
+	set master.tcp.volume.label !showVol{0} [0] + [w row1Y{0}] * Sv [-348 0 42 20]
 	set master.tcp.volume.label.margin [0 0 0 0 1]
 	set master.tcp.volume.label.font + [2] [F]
 	set master.tcp.volume.label.color [$TEXT_2$]
